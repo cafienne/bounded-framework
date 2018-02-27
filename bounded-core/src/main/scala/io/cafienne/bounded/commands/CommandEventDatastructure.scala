@@ -24,6 +24,8 @@ trait Id {
   def idAsString: String
 }
 
+trait AggregateRootState
+
 trait AggregateRootId extends Id
 
 case class UserId(id: UUID) extends AggregateRootId {
@@ -67,6 +69,7 @@ trait AggregateRootCommand {
 }
 
 trait AggregateRootEvent extends Persistable {
+
   def id: AggregateRootId
 
   def metaData: MetaData

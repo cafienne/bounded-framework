@@ -15,30 +15,26 @@
 // limitations under the License.
 package io.cafienne.bounded.test
 
-import akka.actor.{ActorContext, ActorRef}
-import akka.persistence.PersistentActor
+import akka.actor.{ActorSystem, Props}
 import io.cafienne.bounded.commands.{AggregateRootEvent, AggregateRootId}
 
-class CreateEventsInStoreActor(aggregateId: AggregateRootId) extends PersistentActor {
-  override def persistenceId: String = aggregateId.idAsString
-
-
-  override def receiveRecover: Receive = {
-    case other =>
-      context.system.log.debug("received unknown event to recover:" + other)
-  }
-
-  override def receiveCommand: Receive = {
-    case evt: AggregateRootEvent => storeAndReply(sender(), evt)
-    case other                   => context.system.log.error(s"cannot handle command $other")
-  }
-
-  private def storeAndReply(replyTo: ActorRef, evt: Any)(
-      implicit context: ActorContext): Unit = {
-    persist(evt) { e =>
-      context.system.log.debug(s"persisted $e")
-      replyTo ! e
-    }
-  }
-
-}
+//class TestableAggregateRoot(id: AggregateRootId)(implicit system: ActorSystem) {
+//
+//}
+//
+//class AggregateRootTestFixture {
+//
+//
+//  def given(id: AggregateRootId) = {
+//
+//  }
+//
+//  def when(evt: AggregateRootEvent *) = {
+//
+//  }
+//
+//  def results() = {
+//
+//  }
+//
+//}

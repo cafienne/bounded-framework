@@ -26,9 +26,7 @@ object UnsupportedEventProtocol extends DefaultJsonProtocol {
   case class UnsupportedEventAggregateId(id: String) extends AggregateRootId {
     override def idAsString: String = id
   }
-  case class UnsupportedEvent(metaData: MetaData,
-                              id: UnsupportedEventAggregateId)
-      extends AggregateRootEvent
+  case class UnsupportedEvent(metaData: MetaData, id: UnsupportedEventAggregateId) extends AggregateRootEvent
 
   implicit val unsupportedAggregateIdFmt
     : RootJsonFormat[UnsupportedEventAggregateId] = jsonFormat1(
