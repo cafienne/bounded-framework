@@ -18,59 +18,17 @@ package io.cafienne.bounded.cargosample
 import java.time.{ZoneOffset, ZonedDateTime}
 import java.util.UUID
 
-import akka.actor.{ActorRef, ActorSystem, PoisonPill, Props}
+import akka.actor.{ActorSystem, PoisonPill, Props}
 import akka.testkit.{ImplicitSender, TestKit, TestProbe}
 import akka.util.Timeout
 import io.cafienne.bounded.cargosample.aggregate.CargoDomainProtocol._
 import io.cafienne.bounded.cargosample.aggregate.Cargo
 import io.cafienne.bounded.commands._
 import io.cafienne.bounded.test.CreateEventsInStoreActor
-import io.cafienne.bounded.test.commands.{TestCommandGateway, TestingCommandHandlerExtension}
+import io.cafienne.bounded.test.commands.TestCommandGateway
 import org.scalatest.{BeforeAndAfterAll, Matchers, WordSpecLike}
 
 import scala.concurrent.duration._
-
-class TestingCargo(id: CargoId) extends Cargo(id) with TestingCommandHandlerExtension
-
-
-class TestableAggregateRoot[A <: AggregateRootCreator](id: AggregateRootId, evt: AggregateRootEvent, aggregateRootCreator: AggregateRootCreator)
-                                                      (implicit system: ActorSystem) {
-
-  private val storeEventsActor = system.actorOf(Props(classOf[CreateEventsInStoreActor], id), "create-events-actor")
-
-  storeEventsActor ! evt
-
-  private val testProbe = TestProbe()
-  testProbe watch storeEventsActor
-
-  storeEventsActor ! PoisonPill
-  testProbe.expectTerminated(storeEventsActor)
-
-  private var aggregateRootActor: Option[ActorRef] = None
-
-  def when(command: AggregateRootCommand): TestableAggregateRoot[A] = {
-    aggregateRootActor = aggregateRootActor.fold(Some(system.actorOf(aggregateRootCreator.create(command.id), s"test-aggregate-$id")))(r => Some(r))
-    aggregateRootActor.get ! command
-    this
-  }
-
-  def currentState: AggregateRootState = {
-    "bla"
-  }
-
-  def events: Seq[AggregateRootEvent] = {
-    Seq.empty[AggregateRootEvent]
-  }
-
-}
-
-object TestableAggregateRoot {
-
-  def given[A <: AggregateRootCreator](id: AggregateRootId, evt: AggregateRootEvent, aggregateRootCreator: A)
-                                      (implicit system: ActorSystem): TestableAggregateRoot[A] = {
-    new TestableAggregateRoot[A](id, evt, aggregateRootCreator)
-  }
-}
 
 class CargoAggregateRootSpec extends TestKit(ActorSystem("CargoTestSystem", SpecConfig.testConfigAkkaInMem))
   with ImplicitSender with WordSpecLike with Matchers with BeforeAndAfterAll {
@@ -144,25 +102,7 @@ class CargoAggregateRootSpec extends TestKit(ActorSystem("CargoTestSystem", Spec
       }
     }
 
-    "Change the route specification for an existing Cargo Delivery Using AggregateRootTestFixture" in {
-      val cargoId3 = CargoId(java.util.UUID.fromString("D31E3C57-E63E-4AD5-A00B-E5FA9196E80D"))
-      val trackingId = TrackingId(UUID.fromString("53f53841-0bf3-467f-98e2-578d360ee573"))
-      val routeSpecification = RouteSpecification(Location("home"), Location("destination"), ZonedDateTime.parse("2018-03-03T10:15:30+01:00[Europe/Amsterdam]"))
-      val cargoPlannedEvent = CargoPlanned(metaData, cargoId3, trackingId, routeSpecification)
-
-      val newRouteSpecification = RouteSpecification(Location("home"), Location("newDestination"),
-        ZonedDateTime.parse("2018-03-04T10:45:45+01:00[Europe/Amsterdam]"))
-      val specifyNewRouteCommand = SpecifyNewRoute(metaData, cargoId3, newRouteSpecification)
-
-      val ar = TestableAggregateRoot.given(cargoId3, cargoPlannedEvent, Cargo).when(specifyNewRouteCommand)
-
-
-      ar should be("bla")
-    }
-
   }
-
-
 
   override protected def afterAll(): Unit = {
     TestKit.shutdownActorSystem(system)

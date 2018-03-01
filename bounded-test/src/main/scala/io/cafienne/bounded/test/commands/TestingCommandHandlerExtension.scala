@@ -15,18 +15,24 @@
 // limitations under the License.
 package io.cafienne.bounded.test.commands
 
-import io.cafienne.bounded.akka.CommandHandling
-import io.cafienne.bounded.commands.AggregateRootEvent
+import io.cafienne.bounded.akka.{AggregateRoot, CommandHandling}
+import io.cafienne.bounded.commands.{AggregateRootEvent, AggregateRootState}
 
-case class GetState()
+case object GetState
+case object NoState extends AggregateRootState
 
-trait TestingCommandHandlerExtension extends CommandHandling {
+/**
+  * Chaining trait that extends the CommandHandling Persistent Actor
+  * to allow storage of events directly
+  * and to fetch the internal state of the aggregate root.
+  */
+trait TestingCommandHandlerExtension extends AggregateRoot with CommandHandling {
   commandHandler {
     case m: AggregateRootEvent =>
       persist(m) { e =>
         sender() ! e
     }
-    case s: GetState =>
-      sender() ! s"state $s"
+    case _: GetState.type =>
+      state.fold(sender() ! NoState)(state => sender() ! state)
   }
 }

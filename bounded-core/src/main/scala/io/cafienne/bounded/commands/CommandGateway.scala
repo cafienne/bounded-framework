@@ -15,19 +15,16 @@
 // limitations under the License.
 package io.cafienne.bounded.commands
 
-import akka.actor.{ActorRef, ActorSystem, Props}
+import akka.actor.{ActorRef, ActorSystem}
 import akka.pattern.ask
 import akka.util.Timeout
+import io.cafienne.bounded.akka.AggregateRootCreator
 
 import scala.concurrent.{ExecutionContext, Future}
 
 trait CommandGateway {
   def sendAndAsk[T <: AggregateRootCommand](command: T)(implicit validator: ValidateableCommand[T]): Future[_]
   def send[T <: AggregateRootCommand](command: T)(implicit validator: ValidateableCommand[T]): Future[Unit]
-}
-
-trait AggregateRootCreator {
-  def create(id: AggregateRootId): Props
 }
 
 class DefaultCommandGateway[A <: AggregateRootCreator](system: ActorSystem, aggregateRootCreator: A)

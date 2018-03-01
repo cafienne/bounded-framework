@@ -18,9 +18,9 @@ package io.cafienne.bounded.test.commands
 import akka.actor.{ActorRef, ActorSystem, Props}
 import akka.testkit.{TestActor, TestKit, TestKitBase}
 import akka.util.Timeout
+import io.cafienne.bounded.akka.AggregateRootCreator
 import io.cafienne.bounded.commands._
 
-import scala.concurrent.{ExecutionContext, Future}
 import org.scalatest._
 
 

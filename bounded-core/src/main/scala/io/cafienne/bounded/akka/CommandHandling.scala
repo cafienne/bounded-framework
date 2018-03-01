@@ -17,6 +17,17 @@ package io.cafienne.bounded.akka
 
 import akka.actor._
 import akka.persistence.PersistentActor
+import io.cafienne.bounded.commands.{AggregateRootId, AggregateRootState}
+
+import scala.reflect.ClassTag
+
+trait AggregateRootCreator {
+  def create[A <: AggregateRoot :ClassTag](id: AggregateRootId): A
+}
+
+trait AggregateRoot {
+  def state: Option[AggregateRootState]
+}
 
 trait CommandHandling extends PersistentActor {
 
