@@ -18,86 +18,17 @@ package io.cafienne.bounded.cargosample
 import java.time.{ZoneOffset, ZonedDateTime}
 import java.util.UUID
 
-import akka.actor.{ActorRef, ActorSystem, PoisonPill, Props}
-import akka.pattern.ask
-import akka.testkit.{TestKit, TestProbe}
+import akka.actor.ActorSystem
+import akka.testkit.TestKit
 import akka.util.Timeout
-import io.cafienne.bounded.akka.{AggregateRoot, AggregateRootCreator}
 import io.cafienne.bounded.cargosample.aggregate.Cargo.CargoAggregateRootState
 import io.cafienne.bounded.cargosample.aggregate.Cargo
 import io.cafienne.bounded.cargosample.aggregate.CargoDomainProtocol._
-import io.cafienne.bounded.commands._
-import io.cafienne.bounded.test.CreateEventsInStoreActor
-import io.cafienne.bounded.test.commands.{GetState, TestingCommandHandlerExtension}
+import io.cafienne.bounded.aggregate._
+import io.cafienne.bounded.test.TestableAggregateRoot
 import org.scalatest._
 
-import scala.concurrent.Future
 import scala.concurrent.duration._
-
-import scala.reflect.runtime._
-import scala.reflect.runtime.universe._
-
-//TODO remove TypeTag or ClassTag (or both) depending on the solution for actor creation with debugging options.
-class TestableAggregateRoot[A <: AggregateRoot](id: AggregateRootId, evt: AggregateRootEvent, aggregateRootCreator: AggregateRootCreator)
-                                                         (implicit system: ActorSystem, timeout: Timeout, tt: TypeTag[A], ctag: reflect.ClassTag[A]) {
-
-  //TODO actors and identifiers need something extra to prevent issues when things are parallel tested.
-  private val storeEventsActor = system.actorOf(Props(classOf[CreateEventsInStoreActor], id), "create-events-actor")
-  private var handledEvents: List[AggregateRootEvent] = List.empty
-
-  implicit val duration: Duration = timeout.duration
-
-  private val testProbe = TestProbe()
-  testProbe watch storeEventsActor
-
-  testProbe.send(storeEventsActor, evt)
-  testProbe.expectMsgAllConformingOf(classOf[AggregateRootEvent])
-
-  storeEventsActor ! PoisonPill
-  testProbe.expectTerminated(storeEventsActor)
-
-  private var aggregateRootActor: Option[ActorRef] = None
-
-  private def createActor(id: AggregateRootId) = {
-    handledEvents = List.empty
-    //TODO create an actor that extends the TestingCommandHandlerExtension.
-    system.actorOf(Props(new Cargo(id) with TestingCommandHandlerExtension), s"test-aggregate-$id")
-
-    //this initiates Cargo but how to extend it to have the helper debug commandHandlers as found in the extension ?
-    //system.actorOf(Props(ctag.runtimeClass, id), s"test-aggregate-$id")
-  }
-
-  def when(command: AggregateRootCommand): TestableAggregateRoot[A] = {
-    aggregateRootActor = aggregateRootActor.fold(Some(createActor(command.id)))(r => Some(r))
-    val aggregateRootProbe = TestProbe()
-    aggregateRootProbe watch aggregateRootActor.get
-
-    aggregateRootProbe.send(aggregateRootActor.get, command)
-    aggregateRootProbe.expectMsgPF(duration) {
-      case Right(msgList: List[AggregateRootEvent]) if msgList.isInstanceOf[List[AggregateRootEvent]] =>
-        handledEvents = handledEvents ++ msgList
-      case other => throw new IllegalStateException("Actor should receive events not " + other)
-    }
-    this
-  }
-
-  def currentState: Future[AggregateRootState] = {
-    aggregateRootActor.fold(Future.failed[AggregateRootState](new IllegalStateException("")))(actor => (actor ? GetState).mapTo[AggregateRootState])
-  }
-
-  def events: List[AggregateRootEvent] = {
-    handledEvents
-  }
-
-}
-
-object TestableAggregateRoot {
-
-  def given[A <: AggregateRoot](id: AggregateRootId, evt: AggregateRootEvent, aggregateRootCreator: AggregateRootCreator)
-                                      (implicit system: ActorSystem, timeout: Timeout, tt: TypeTag[A], ctag: reflect.ClassTag[A]): TestableAggregateRoot[A] = {
-    new TestableAggregateRoot[A](id, evt, aggregateRootCreator)
-  }
-}
 
 class CargoAggregateRootNewSpec extends AsyncWordSpec with Matchers with BeforeAndAfterAll {
 

@@ -23,9 +23,8 @@ import akka.testkit.{ImplicitSender, TestKit, TestProbe}
 import akka.util.Timeout
 import io.cafienne.bounded.cargosample.aggregate.CargoDomainProtocol._
 import io.cafienne.bounded.cargosample.aggregate.Cargo
-import io.cafienne.bounded.commands._
+import io.cafienne.bounded.aggregate._
 import io.cafienne.bounded.test.CreateEventsInStoreActor
-import io.cafienne.bounded.test.commands.TestCommandGateway
 import org.scalatest.{BeforeAndAfterAll, Matchers, WordSpecLike}
 
 import scala.concurrent.duration._
@@ -34,7 +33,6 @@ class CargoAggregateRootSpec extends TestKit(ActorSystem("CargoTestSystem", Spec
   with ImplicitSender with WordSpecLike with Matchers with BeforeAndAfterAll {
 
   implicit val timeout = Timeout(10.seconds) //dilated
-  val commandGateway = new TestCommandGateway(system, Cargo)
 
   val userId1 = UserId(UUID.fromString("53f53841-0bf3-467f-98e2-578d360ee572"))
   val userContext = Some(new UserContext {

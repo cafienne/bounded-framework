@@ -13,28 +13,16 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-package io.cafienne.bounded.test
+package io.cafienne.bounded.aggregate
 
-import akka.actor.{ActorSystem, Props}
-import io.cafienne.bounded.commands.{AggregateRootEvent, AggregateRootId}
+import scala.concurrent.Future
 
-//class TestableAggregateRoot(id: AggregateRootId)(implicit system: ActorSystem) {
-//
-//}
-//
-//class AggregateRootTestFixture {
-//
-//
-//  def given(id: AggregateRootId) = {
-//
-//  }
-//
-//  def when(evt: AggregateRootEvent *) = {
-//
-//  }
-//
-//  def results() = {
-//
-//  }
-//
-//}
+trait ValidateableCommand[T <: AggregateRootCommand] {
+  def validate(cmd: T): Future[T]
+}
+
+object CommandValidator {
+  def validate[T <: AggregateRootCommand](v: T)(
+      implicit validator: ValidateableCommand[T]): Future[T] =
+    validator.validate(v)
+}

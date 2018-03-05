@@ -13,26 +13,39 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-package io.cafienne.bounded.test.commands
+package io.cafienne.bounded.aggregate
 
-import io.cafienne.bounded.akka.{AggregateRoot, CommandHandling}
-import io.cafienne.bounded.commands.{AggregateRootEvent, AggregateRootState}
+import akka.actor._
+import akka.persistence.PersistentActor
+import io.cafienne.bounded.aggregate.AggregateRoot.{GetState, NoState}
 
-case object GetState
-case object NoState extends AggregateRootState
+import scala.reflect.ClassTag
 
-/**
-  * Chaining trait that extends the CommandHandling Persistent Actor
-  * to allow storage of events directly
-  * and to fetch the internal state of the aggregate root.
-  */
-trait TestingCommandHandlerExtension extends AggregateRoot with CommandHandling {
-  commandHandler {
+trait AggregateRootCreator {
+  def create[A <: AggregateRoot :ClassTag](id: AggregateRootId): A
+}
+
+trait AggregateRoot extends PersistentActor {
+  def state: Option[AggregateRootState]
+
+  var commandReceivers: Actor.Receive = {
     case m: AggregateRootEvent =>
       persist(m) { e =>
         sender() ! e
-    }
+      }
     case _: GetState.type =>
       state.fold(sender() ! NoState)(state => sender() ! state)
   }
+
+
+  def commandHandler(next: Actor.Receive): Unit = { commandReceivers = commandReceivers orElse next }
+
+  def receiveCommand: Actor.Receive = commandReceivers // Actor.receive definition
+
+}
+
+object AggregateRoot {
+  case object GetState
+  case object NoState extends AggregateRootState
+
 }

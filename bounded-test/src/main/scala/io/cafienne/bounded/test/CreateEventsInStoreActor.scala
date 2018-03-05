@@ -17,7 +17,7 @@ package io.cafienne.bounded.test
 
 import akka.actor.{ActorContext, ActorRef}
 import akka.persistence.PersistentActor
-import io.cafienne.bounded.commands.{AggregateRootEvent, AggregateRootId}
+import io.cafienne.bounded.aggregate.{AggregateRootEvent, AggregateRootId}
 
 class CreateEventsInStoreActor(aggregateId: AggregateRootId) extends PersistentActor {
   override def persistenceId: String = aggregateId.idAsString

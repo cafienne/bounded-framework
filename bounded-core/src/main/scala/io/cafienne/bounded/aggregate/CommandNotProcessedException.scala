@@ -13,27 +13,23 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-package io.cafienne.bounded.akka
+package io.cafienne.bounded.aggregate
 
-import akka.actor._
-import akka.persistence.PersistentActor
-import io.cafienne.bounded.commands.{AggregateRootId, AggregateRootState}
+class CommandNotProcessedException(reason: String) extends Exception(reason) {
 
-import scala.reflect.ClassTag
-
-trait AggregateRootCreator {
-  def create[A <: AggregateRoot :ClassTag](id: AggregateRootId): A
+  def this(message: String, cause: Throwable) {
+    this(message)
+    initCause(cause)
+  }
 }
 
-trait AggregateRoot {
-  def state: Option[AggregateRootState]
-}
+object CommandNotProcessedException {
+  def apply(reason: String): CommandNotProcessedException =
+    new CommandNotProcessedException(reason)
+  def apply(reason: String, cause: Throwable): CommandNotProcessedException =
+    new CommandNotProcessedException(reason, cause)
 
-trait CommandHandling extends PersistentActor {
-
-  var commandReceivers: Actor.Receive = Actor.emptyBehavior
-
-  def commandHandler(next: Actor.Receive): Unit = { commandReceivers = commandReceivers orElse next }
-
-  def receiveCommand: Actor.Receive = commandReceivers // Actor.receive definition
+  def unapply(
+      e: CommandNotProcessedException): Option[(String, Option[Throwable])] =
+    Some((e.getMessage, Option(e.getCause)))
 }

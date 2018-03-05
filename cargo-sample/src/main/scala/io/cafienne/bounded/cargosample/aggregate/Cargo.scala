@@ -17,11 +17,9 @@ package io.cafienne.bounded.cargosample.aggregate
 
 import akka.actor._
 import akka.persistence.RecoveryCompleted
-import io.cafienne.bounded.akka.{AggregateRoot, AggregateRootCreator, CommandHandling}
-import io.cafienne.bounded.commands._
+import io.cafienne.bounded.aggregate._
 import io.cafienne.bounded.cargosample.aggregate.Cargo.CargoAggregateRootState
 import io.cafienne.bounded.cargosample.aggregate.CargoDomainProtocol._
-import io.cafienne.bounded.test.commands.TestingCommandHandlerExtension
 
 import scala.collection.immutable.Seq
 import scala.reflect.ClassTag
@@ -30,7 +28,7 @@ import scala.reflect.ClassTag
  * Aggregate root that keeps the logic of the cargo.
  * @param cargoId unique identifier for cargo.
  */
-class Cargo(cargoId: AggregateRootId) extends AggregateRoot with CommandHandling with ActorLogging {
+class Cargo(cargoId: AggregateRootId) extends AggregateRoot with ActorLogging {
 
   override def persistenceId: String = cargoId.idAsString
 

@@ -15,7 +15,7 @@
 // limitations under the License.
 package io.cafienne.bounded.akka.persistence.persisters
 
-import io.cafienne.bounded.commands._
+import io.cafienne.bounded.aggregate._
 import com.typesafe.scalalogging.LazyLogging
 import spray.json.{DefaultJsonProtocol, RootJsonFormat}
 import stamina._
