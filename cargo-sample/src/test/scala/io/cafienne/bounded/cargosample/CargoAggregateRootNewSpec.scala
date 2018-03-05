@@ -55,7 +55,7 @@ class CargoAggregateRootNewSpec extends AsyncWordSpec with Matchers with BeforeA
         ZonedDateTime.parse("2018-03-04T10:45:45+01:00[Europe/Amsterdam]"))
       val specifyNewRouteCommand = SpecifyNewRoute(metaData, cargoId3, newRouteSpecification)
 
-      val ar = TestableAggregateRoot.given[Cargo](cargoId3, cargoPlannedEvent, Cargo).when(specifyNewRouteCommand)
+      val ar = TestableAggregateRoot.given[Cargo](cargoId3, cargoPlannedEvent).when(specifyNewRouteCommand)
 
       // You see that this only shows the events that are 'published' via when
       ar.events should contain (NewRouteSpecified(metaData, cargoId3, newRouteSpecification))

@@ -27,7 +27,7 @@ import io.cafienne.bounded.aggregate._
 import scala.concurrent.Future
 import scala.concurrent.duration.Duration
 
-class TestableAggregateRoot[A <: AggregateRoot](id: AggregateRootId, evt: AggregateRootEvent, aggregateRootCreator: AggregateRootCreator)
+class TestableAggregateRoot[A <: AggregateRoot](id: AggregateRootId, evt: AggregateRootEvent)
                                                (implicit system: ActorSystem, timeout: Timeout, ctag: reflect.ClassTag[A]) {
 
   import TestableAggregateRoot.testId
@@ -86,9 +86,9 @@ class TestableAggregateRoot[A <: AggregateRoot](id: AggregateRootId, evt: Aggreg
 
 object TestableAggregateRoot {
 
-  def given[A <: AggregateRoot](id: AggregateRootId, evt: AggregateRootEvent, aggregateRootCreator: AggregateRootCreator)
+  def given[A <: AggregateRoot](id: AggregateRootId, evt: AggregateRootEvent)
                                (implicit system: ActorSystem, timeout: Timeout, ctag: reflect.ClassTag[A]): TestableAggregateRoot[A] = {
-    new TestableAggregateRoot[A](id, evt, aggregateRootCreator)
+    new TestableAggregateRoot[A](id, evt)
   }
 
   //The tested aggregate root makes use of an additional counter in the id in order to prevent collision of parallel running tests.
