@@ -15,6 +15,8 @@
 // limitations under the License.
 package io.cafienne.bounded.test
 
+import java.util.concurrent.atomic.AtomicInteger
+
 import akka.actor._
 import akka.pattern.ask
 import akka.testkit.TestProbe
@@ -25,12 +27,13 @@ import io.cafienne.bounded.aggregate._
 import scala.concurrent.Future
 import scala.concurrent.duration.Duration
 
-//TODO remove TypeTag or ClassTag (or both) depending on the solution for actor creation with debugging options.
 class TestableAggregateRoot[A <: AggregateRoot](id: AggregateRootId, evt: AggregateRootEvent, aggregateRootCreator: AggregateRootCreator)
                                                (implicit system: ActorSystem, timeout: Timeout, ctag: reflect.ClassTag[A]) {
 
-  //TODO actors and identifiers need something extra to prevent issues when things are parallel tested.
-  private val storeEventsActor = system.actorOf(Props(classOf[CreateEventsInStoreActor], id), "create-events-actor")
+  import TestableAggregateRoot.testId
+  final val arTestId = testId(id)
+
+  private val storeEventsActor = system.actorOf(Props(classOf[CreateEventsInStoreActor], arTestId), "create-events-actor")
   private var handledEvents: List[AggregateRootEvent] = List.empty
 
   implicit val duration: Duration = timeout.duration
@@ -48,11 +51,12 @@ class TestableAggregateRoot[A <: AggregateRoot](id: AggregateRootId, evt: Aggreg
 
   private def createActor[B <: AggregateRoot](id: AggregateRootId) = {
     handledEvents = List.empty
-    system.actorOf(Props(ctag.runtimeClass, id), s"test-aggregate-$id")
+    system.actorOf(Props(ctag.runtimeClass, arTestId), s"test-aggregate-$arTestId")
   }
 
   def when(command: AggregateRootCommand): TestableAggregateRoot[A] = {
-    aggregateRootActor = aggregateRootActor.fold(Some(createActor[A](command.id)))(r => Some(r))
+    if (command.id != id) throw new IllegalArgumentException(s"Command for Aggregate Root ${command.id} cannot be handled by this aggregate root with id $id")
+    aggregateRootActor = aggregateRootActor.fold(Some(createActor[A](arTestId)))(r => Some(r))
     val aggregateRootProbe = TestProbe()
     aggregateRootProbe watch aggregateRootActor.get
 
@@ -73,6 +77,11 @@ class TestableAggregateRoot[A <: AggregateRoot](id: AggregateRootId, evt: Aggreg
     handledEvents
   }
 
+  override def toString: String = {
+    s"Aggregate Root ${ctag.runtimeClass.getSimpleName} ${id.idAsString}"
+  }
+
+
 }
 
 object TestableAggregateRoot {
@@ -80,6 +89,16 @@ object TestableAggregateRoot {
   def given[A <: AggregateRoot](id: AggregateRootId, evt: AggregateRootEvent, aggregateRootCreator: AggregateRootCreator)
                                (implicit system: ActorSystem, timeout: Timeout, ctag: reflect.ClassTag[A]): TestableAggregateRoot[A] = {
     new TestableAggregateRoot[A](id, evt, aggregateRootCreator)
+  }
+
+  //The tested aggregate root makes use of an additional counter in the id in order to prevent collision of parallel running tests.
+  private val atomicCounter: AtomicInteger = new AtomicInteger()
+  private def testId(id: AggregateRootId): AggregateRootId = TestId(id.idAsString + "-" + atomicCounter.getAndIncrement().toString)
+
+  private case class TestId(id: String) extends AggregateRootId {
+    override def idAsString: String = id
+
+    override def toString: String = this.idAsString
   }
 }
 
