@@ -29,7 +29,7 @@ import org.scalatest.{BeforeAndAfterAll, Matchers, WordSpecLike}
 
 import scala.concurrent.duration._
 
-class CargoAggregateRootSpec extends TestKit(ActorSystem("CargoTestSystem", SpecConfig.testConfigAkkaInMem))
+class CargoAggregateRootActorSpec extends TestKit(ActorSystem("CargoTestSystem", SpecConfig.testConfigAkkaInMem))
   with ImplicitSender with WordSpecLike with Matchers with BeforeAndAfterAll {
 
   implicit val timeout = Timeout(10.seconds) //dilated

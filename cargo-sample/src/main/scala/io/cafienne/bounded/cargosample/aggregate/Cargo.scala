@@ -28,7 +28,7 @@ import scala.reflect.ClassTag
  * Aggregate root that keeps the logic of the cargo.
  * @param cargoId unique identifier for cargo.
  */
-class Cargo(cargoId: AggregateRootId) extends AggregateRoot with ActorLogging {
+class Cargo(cargoId: AggregateRootId) extends AggregateRootActor with ActorLogging {
 
   override def persistenceId: String = cargoId.idAsString
 
@@ -82,7 +82,7 @@ object Cargo extends AggregateRootCreator {
 
   final val aggregateRootTag = "ar-cargo" // used to tag the events and read them
 
-  override def create[A <: AggregateRoot :ClassTag](id: AggregateRootId): A = new Cargo(id).asInstanceOf[A]
+  override def create[A <: AggregateRootActor :ClassTag](id: AggregateRootId): A = new Cargo(id).asInstanceOf[A]
 
 }
 

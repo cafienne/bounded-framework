@@ -30,7 +30,7 @@ import org.scalatest._
 
 import scala.concurrent.duration._
 
-class CargoAggregateRootNewSpec extends AsyncWordSpec with Matchers with BeforeAndAfterAll {
+class CargoAggregateRootActorNewSpec extends AsyncWordSpec with Matchers with BeforeAndAfterAll {
 
   implicit val timeout = Timeout(10.seconds) //dilated
   implicit val system = ActorSystem("CargoTestSystem", SpecConfig.testConfigAkkaInMem)

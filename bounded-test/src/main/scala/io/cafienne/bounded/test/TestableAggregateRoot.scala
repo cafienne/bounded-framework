@@ -21,14 +21,14 @@ import akka.actor._
 import akka.pattern.ask
 import akka.testkit.TestProbe
 import akka.util.Timeout
-import io.cafienne.bounded.aggregate.AggregateRoot.GetState
+import io.cafienne.bounded.aggregate.AggregateRootActor.GetState
 import io.cafienne.bounded.aggregate._
 
 import scala.concurrent.Future
 import scala.concurrent.duration.Duration
 
-class TestableAggregateRoot[A <: AggregateRoot](id: AggregateRootId, evt: AggregateRootEvent)
-                                               (implicit system: ActorSystem, timeout: Timeout, ctag: reflect.ClassTag[A]) {
+class TestableAggregateRoot[A <: AggregateRootActor](id: AggregateRootId, evt: AggregateRootEvent)
+                                                    (implicit system: ActorSystem, timeout: Timeout, ctag: reflect.ClassTag[A]) {
 
   import TestableAggregateRoot.testId
   final val arTestId = testId(id)
@@ -49,7 +49,7 @@ class TestableAggregateRoot[A <: AggregateRoot](id: AggregateRootId, evt: Aggreg
 
   private var aggregateRootActor: Option[ActorRef] = None
 
-  private def createActor[B <: AggregateRoot](id: AggregateRootId) = {
+  private def createActor[B <: AggregateRootActor](id: AggregateRootId) = {
     handledEvents = List.empty
     system.actorOf(Props(ctag.runtimeClass, arTestId), s"test-aggregate-$arTestId")
   }
@@ -86,8 +86,8 @@ class TestableAggregateRoot[A <: AggregateRoot](id: AggregateRootId, evt: Aggreg
 
 object TestableAggregateRoot {
 
-  def given[A <: AggregateRoot](id: AggregateRootId, evt: AggregateRootEvent)
-                               (implicit system: ActorSystem, timeout: Timeout, ctag: reflect.ClassTag[A]): TestableAggregateRoot[A] = {
+  def given[A <: AggregateRootActor](id: AggregateRootId, evt: AggregateRootEvent)
+                                    (implicit system: ActorSystem, timeout: Timeout, ctag: reflect.ClassTag[A]): TestableAggregateRoot[A] = {
     new TestableAggregateRoot[A](id, evt)
   }
 

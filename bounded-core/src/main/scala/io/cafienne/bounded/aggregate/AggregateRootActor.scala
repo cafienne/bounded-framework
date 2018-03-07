@@ -17,15 +17,15 @@ package io.cafienne.bounded.aggregate
 
 import akka.actor._
 import akka.persistence.PersistentActor
-import io.cafienne.bounded.aggregate.AggregateRoot.{GetState, NoState}
+import io.cafienne.bounded.aggregate.AggregateRootActor.{GetState, NoState}
 
 import scala.reflect.ClassTag
 
 trait AggregateRootCreator {
-  def create[A <: AggregateRoot :ClassTag](id: AggregateRootId): A
+  def create[A <: AggregateRootActor :ClassTag](id: AggregateRootId): A
 }
 
-trait AggregateRoot extends PersistentActor {
+trait AggregateRootActor extends PersistentActor {
   def state: Option[AggregateRootState]
 
   var commandReceivers: Actor.Receive = {
@@ -44,7 +44,7 @@ trait AggregateRoot extends PersistentActor {
 
 }
 
-object AggregateRoot {
+object AggregateRootActor {
   case object GetState
   case object NoState extends AggregateRootState
 
