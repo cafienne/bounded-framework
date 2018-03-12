@@ -48,14 +48,14 @@ trait AggregateRootActor extends PersistentActor with AggregateRootStateCreator 
     * @param command is the commands your aggregate root expects
     * @param currentState of the Aggregate Root
     * @return a seqency of events when everything is Right, or an Exception (Left)
-    */
+    */                                                                                //TODO replace Either (no EXCEPTION)
   def handleCommand(command: AggregateRootCommand, currentState: AggregateRootState): Either[Exception, Seq[AggregateRootEvent]]
 
   /**
     * In your implementation you can handle your own commands by writing a commandHanlder {} function.
     * @param next is the partial Actor.Receive function of messages you like to handle next to the Aggregate Root default messages
     */
-  final def commandHandler(next: Actor.Receive): Unit = { commandReceivers = commandReceivers orElse next }
+  //private final def commandHandler(next: Actor.Receive): Unit = { commandReceivers = commandReceivers orElse next }
 
 
   // Below this line is the internal implementation of the Aggregate Root Actor.
@@ -76,7 +76,6 @@ trait AggregateRootActor extends PersistentActor with AggregateRootStateCreator 
           persistAll[AggregateRootEvent](evt) { e =>
             updateState(e)
           }
-          //log.debug("Command handled for {} gives events {}", persistenceId, evt)
           originalSender ! Right(evt)
         case Left(exc) => originalSender ! Left(CommandNotProcessedException("Could not handle command.", exc))
       }
