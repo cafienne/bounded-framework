@@ -13,17 +13,19 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-package io.cafienne.bounded.cargosample.persistence
+package io.cafienne.bounded.cargosample.httpapi
 
-import akka.persistence.journal.{Tagged, WriteEventAdapter}
-import io.cafienne.bounded.cargosample.domain.Cargo
-import io.cafienne.bounded.cargosample.domain.CargoDomainProtocol.CargoDomainEvent
+import spray.json._
 
-class CargoTaggingEventAdapter extends WriteEventAdapter {
-  override def manifest(event: Any): String = ""
+/**
+ * JSON protocol used by the http API.
+ * Contains specific protocol messages and the JSON serialization instructions for the Spray JSON format
+ * for all classes used with the http API.
+ */
+object HttpJsonProtocol extends DefaultJsonProtocol {
 
-  override def toJournal(event: Any): Any = event match {
-    case prEvent: CargoDomainEvent => Tagged(prEvent, Set(Cargo.aggregateRootTag))
-    case other => other
-  }
+  case class ErrorResponse(msg: String)
+
+  implicit val errorResponsFmt = jsonFormat1(ErrorResponse)
+
 }

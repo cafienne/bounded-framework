@@ -13,7 +13,7 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-package io.cafienne.bounded.cargosample
+package io.cafienne.bounded.cargosample.domain
 
 import java.time.{ZoneOffset, ZonedDateTime}
 import java.util.UUID
@@ -21,9 +21,8 @@ import java.util.UUID
 import akka.actor.{ActorSystem, PoisonPill, Props}
 import akka.testkit.{ImplicitSender, TestKit, TestProbe}
 import akka.util.Timeout
-import io.cafienne.bounded.cargosample.aggregate.CargoDomainProtocol._
-import io.cafienne.bounded.cargosample.aggregate.Cargo
 import io.cafienne.bounded.aggregate._
+import io.cafienne.bounded.cargosample.domain.CargoDomainProtocol._
 import io.cafienne.bounded.test.CreateEventsInStoreActor
 import org.scalatest.{BeforeAndAfterAll, Matchers, WordSpecLike}
 

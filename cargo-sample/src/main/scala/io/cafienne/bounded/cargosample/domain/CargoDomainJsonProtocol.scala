@@ -13,11 +13,11 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-package io.cafienne.bounded.cargosample.aggregate
+package io.cafienne.bounded.cargosample.domain
 
 import java.util.UUID
 
-import io.cafienne.bounded.cargosample.aggregate.CargoDomainProtocol._
+import io.cafienne.bounded.cargosample.domain.CargoDomainProtocol._
 import spray.json.{RootJsonFormat, _}
 
 object CargoDomainJsonProtocol extends DefaultJsonProtocol {

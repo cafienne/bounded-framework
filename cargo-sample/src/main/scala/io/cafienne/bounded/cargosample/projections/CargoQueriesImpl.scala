@@ -13,17 +13,17 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-package io.cafienne.bounded.cargosample.persistence
+package io.cafienne.bounded.cargosample.projections
 
-import akka.persistence.journal.{Tagged, WriteEventAdapter}
-import io.cafienne.bounded.cargosample.domain.Cargo
-import io.cafienne.bounded.cargosample.domain.CargoDomainProtocol.CargoDomainEvent
+import akka.actor.ActorSystem
+import io.cafienne.bounded.cargosample.domain.CargoDomainProtocol
 
-class CargoTaggingEventAdapter extends WriteEventAdapter {
-  override def manifest(event: Any): String = ""
+import scala.concurrent.Future
 
-  override def toJournal(event: Any): Any = event match {
-    case prEvent: CargoDomainEvent => Tagged(prEvent, Set(Cargo.aggregateRootTag))
-    case other => other
+class CargoQueriesImpl()(implicit val system: ActorSystem) extends CargoQueries {
+
+  override def getCargo(cargoId: CargoDomainProtocol.CargoId): Future[QueriesJsonProtocol.CargoViewItem] = {
+    CargoViewProjectionWriter.getCargo(cargoId)
   }
+
 }
