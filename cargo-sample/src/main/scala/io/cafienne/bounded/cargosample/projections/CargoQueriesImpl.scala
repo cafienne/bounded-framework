@@ -13,16 +13,17 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-package io.cafienne.bounded.cargosample.persistence
+package io.cafienne.bounded.cargosample.projections
 
-import io.cafienne.bounded.cargosample.domain.CargoDomainProtocol.{CargoPlanned, NewRouteSpecified}
-import spray.json._
+import akka.actor.ActorSystem
+import io.cafienne.bounded.cargosample.domain.CargoDomainProtocol
 
-object CargoDomainEventJsonProtocol extends DefaultJsonProtocol {
-  import io.cafienne.bounded.aggregate.CommandEventDatastructureJsonProtocol._
-  import io.cafienne.bounded.cargosample.domain.CargoDomainJsonProtocol._
+import scala.concurrent.Future
 
-  implicit val cargoPlannedFmt = jsonFormat4(CargoPlanned)
-  implicit val newRouteSpecifiedFmt = jsonFormat3(NewRouteSpecified)
+class CargoQueriesImpl()(implicit val system: ActorSystem) extends CargoQueries {
+
+  override def getCargo(cargoId: CargoDomainProtocol.CargoId): Future[QueriesJsonProtocol.CargoViewItem] = {
+    CargoViewProjectionWriter.getCargo(cargoId)
+  }
 
 }
