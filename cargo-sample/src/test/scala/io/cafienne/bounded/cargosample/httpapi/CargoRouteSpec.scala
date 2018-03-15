@@ -25,7 +25,6 @@ import akka.http.scaladsl.testkit.ScalatestRouteTest
 import io.cafienne.bounded.aggregate.{AggregateRootCommand, CommandGateway, ValidateableCommand}
 import io.cafienne.bounded.cargosample.domain.CargoDomainProtocol
 import io.cafienne.bounded.cargosample.domain.CargoDomainProtocol.{CargoId, CargoNotFound}
-import io.cafienne.bounded.cargosample.projections.QueriesJsonProtocol.CargoViewItem
 import io.cafienne.bounded.cargosample.projections.{CargoQueries, QueriesJsonProtocol}
 import org.scalatest._
 
@@ -33,17 +32,13 @@ import scala.concurrent.Future
 
 class CargoRouteSpec extends FlatSpec with MustMatchers with ScalatestRouteTest {
 
-  import spray.json._
-  import HttpJsonProtocol._
-  import io.cafienne.bounded.cargosample.domain.CargoDomainJsonProtocol._
-  import io.cafienne.bounded.aggregate.CommandEventDatastructureJsonProtocol._
+  import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
   import QueriesJsonProtocol._
 
   val logger = Logging(system, getClass)
 
-
   val cargoId1 = CargoId(UUID.fromString("8CD15DA4-006B-478C-8640-2FA52AA7657E"))
-  val cargoViewItem1 = CargoViewItem(cargoId1, "Amsterdam", "New York", ZonedDateTime.parse("2018-01-01T12:25:38.492+01:00[Europe/Amsterdam]"))
+  val cargoViewItem1 = CargoViewItem(cargoId1, "Amsterdam", "New York", ZonedDateTime.parse("2018-01-01T12:25:38+01:00"))
 
   val cargoQueries = new CargoQueries {
     override def getCargo(cargoId: CargoDomainProtocol.CargoId): Future[CargoViewItem] = {
@@ -67,8 +62,8 @@ class CargoRouteSpec extends FlatSpec with MustMatchers with ScalatestRouteTest 
     "The Cargo route" should "fetch the data of a specific piece of cargo" in {
       Get(s"/cargo/${cargoId1.id}") ~> Route.seal(cargoRoute.routes) ~> check {
         status must be(StatusCodes.OK)
-        //val theResponse = responseAs[CargoViewItem]
-        //theResponse must be(cargoViewItem1)
+        val theResponse = responseAs[CargoViewItem]
+        theResponse must be(cargoViewItem1)
       }
     }
 
