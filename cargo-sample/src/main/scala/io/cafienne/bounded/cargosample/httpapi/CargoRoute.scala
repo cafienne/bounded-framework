@@ -24,7 +24,7 @@ import akka.event.Logging
 import akka.http.scaladsl.common.{EntityStreamingSupport, JsonEntityStreamingSupport}
 import akka.http.scaladsl.server.{PathMatchers, Route}
 import io.cafienne.bounded.aggregate.CommandGateway
-import io.cafienne.bounded.cargosample.domain.CargoDomainProtocol.CargoId
+import io.cafienne.bounded.cargosample.domain.CargoDomainProtocol.{CargoId, CargoNotFound}
 import io.cafienne.bounded.cargosample.projections.CargoQueries
 import io.cafienne.bounded.cargosample.projections.QueriesJsonProtocol.CargoViewItem
 import io.swagger.annotations._
@@ -61,7 +61,12 @@ class CargoRoute(commandGateway: CommandGateway, cargoQueries: CargoQueries)(imp
           val cargoId = CargoId(id)
           onComplete(cargoQueries.getCargo(cargoId)) {
             case Success(cargoResponse) => complete(StatusCodes.OK, cargoResponse)
-            case Failure(err) => complete(StatusCodes.InternalServerError -> ErrorResponse(err + Option(err.getCause).map(t => s" due to ${t.getMessage}").getOrElse("")))
+            case Failure(err) => {
+              err match {
+                case notFound: CargoNotFound => complete(StatusCodes.NotFound -> ErrorResponse(notFound.msg))
+                case ex: Throwable => complete(StatusCodes.InternalServerError -> ErrorResponse(ex.getMessage + Option(ex.getCause).map(t => s" due to ${t.getMessage}").getOrElse("")))
+              }
+            }
             case _ => complete(StatusCodes.NoContent)
           }
         }

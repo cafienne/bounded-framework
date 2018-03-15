@@ -22,6 +22,7 @@ import akka.actor.ActorSystem
 import akka.testkit.TestKit
 import akka.util.Timeout
 import io.cafienne.bounded.aggregate._
+import io.cafienne.bounded.cargosample.SpecConfig
 import io.cafienne.bounded.cargosample.domain.Cargo.CargoAggregateRootState
 import io.cafienne.bounded.cargosample.domain.CargoDomainProtocol._
 import io.cafienne.bounded.test.TestableAggregateRoot

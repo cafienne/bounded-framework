@@ -13,7 +13,7 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-package io.cafienne.bounded.cargosample.domain
+package io.cafienne.bounded.cargosample
 
 import com.typesafe.config.ConfigFactory
 
@@ -71,7 +71,7 @@ object SpecConfig {
       |        cargoTagging = "io.cafienne.bounded.cargosample.persistence.CargoTaggingEventAdapter"
       |      }
       |      event-adapter-bindings {
-      |        "io.cafienne.bounded.cargosample.aggregate.CargoDomainProtocol$CargoDomainEvent" = cargoTagging
+      |        "io.cafienne.bounded.cargosample.domain.CargoDomainProtocol$CargoDomainEvent" = cargoTagging
       |      }
       |    }
       |    inmemory-read-journal {

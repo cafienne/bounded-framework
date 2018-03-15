@@ -23,7 +23,7 @@ import spray.json.{RootJsonFormat, _}
 object CargoDomainJsonProtocol extends DefaultJsonProtocol {
   import io.cafienne.bounded.aggregate.CommandEventDatastructureJsonProtocol._
 
-  implicit object smartDriverIdFmt extends RootJsonFormat[CargoId] {
+  implicit object cargoIdFmt extends RootJsonFormat[CargoId] {
     override def write(obj: CargoId): JsValue = JsString(obj.id.toString)
 
     override def read(json: JsValue): CargoId = json match {

@@ -22,7 +22,7 @@ object CargoDomainEventJsonProtocol extends DefaultJsonProtocol {
   import io.cafienne.bounded.aggregate.CommandEventDatastructureJsonProtocol._
   import io.cafienne.bounded.cargosample.domain.CargoDomainJsonProtocol._
 
-  implicit val smartDriverEnrolledFmt = jsonFormat4(CargoPlanned)
-  implicit val smartDriverScheduleUpdated = jsonFormat3(NewRouteSpecified)
+  implicit val cargoPlannedFmt = jsonFormat4(CargoPlanned)
+  implicit val newRouteSpecifiedFmt = jsonFormat3(NewRouteSpecified)
 
 }

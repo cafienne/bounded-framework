@@ -25,6 +25,7 @@ import akka.http.scaladsl.testkit.ScalatestRouteTest
 import io.cafienne.bounded.aggregate.{AggregateRootCommand, CommandGateway, ValidateableCommand}
 import io.cafienne.bounded.cargosample.domain.CargoDomainProtocol
 import io.cafienne.bounded.cargosample.domain.CargoDomainProtocol.{CargoId, CargoNotFound}
+import io.cafienne.bounded.cargosample.httpapi.HttpJsonProtocol.ErrorResponse
 import io.cafienne.bounded.cargosample.projections.{CargoQueries, QueriesJsonProtocol}
 import org.scalatest._
 
@@ -59,12 +60,23 @@ class CargoRouteSpec extends FlatSpec with MustMatchers with ScalatestRouteTest 
 
   val cargoRoute = new CargoRoute(commandGateway, cargoQueries)
 
-    "The Cargo route" should "fetch the data of a specific piece of cargo" in {
-      Get(s"/cargo/${cargoId1.id}") ~> Route.seal(cargoRoute.routes) ~> check {
-        status must be(StatusCodes.OK)
-        val theResponse = responseAs[CargoViewItem]
-        theResponse must be(cargoViewItem1)
-      }
+  "The Cargo route" should "fetch the data of a specific piece of cargo" in {
+    Get(s"/cargo/${cargoId1.id}") ~> Route.seal(cargoRoute.routes) ~> check {
+      status must be(StatusCodes.OK)
+      val theResponse = responseAs[CargoViewItem]
+      theResponse must be(cargoViewItem1)
     }
+  }
+
+  it should "respond with a not found when the cargo does not exist" in {
+    val notExistingCargoId = CargoId(UUID.fromString("92E597FA-9099-408A-A1D4-5AF7F1A6E761"))
+    val expectedErrorResponse = ErrorResponse("Cargo with id 92e597fa-9099-408a-a1d4-5af7f1a6e761 is not found")
+    Get(s"/cargo/${notExistingCargoId.id}") ~> Route.seal(cargoRoute.routes) ~> check {
+      status must be(StatusCodes.NotFound)
+      val theResponse = responseAs[ErrorResponse]
+      theResponse must be(expectedErrorResponse)
+    }
+
+  }
 
 }

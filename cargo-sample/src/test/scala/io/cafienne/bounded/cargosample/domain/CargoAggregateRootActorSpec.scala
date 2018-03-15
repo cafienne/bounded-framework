@@ -22,6 +22,7 @@ import akka.actor.{ActorSystem, PoisonPill, Props}
 import akka.testkit.{ImplicitSender, TestKit, TestProbe}
 import akka.util.Timeout
 import io.cafienne.bounded.aggregate._
+import io.cafienne.bounded.cargosample.SpecConfig
 import io.cafienne.bounded.cargosample.domain.CargoDomainProtocol._
 import io.cafienne.bounded.test.CreateEventsInStoreActor
 import org.scalatest.{BeforeAndAfterAll, Matchers, WordSpecLike}
@@ -67,7 +68,7 @@ class CargoAggregateRootActorSpec extends TestKit(ActorSystem("CargoTestSystem",
       val cargoPlannedEvent = CargoPlanned(metaData, cargoId2, trackingId, routeSpecification)
       val storeEventsActor = system.actorOf(Props(classOf[CreateEventsInStoreActor], cargoId2), "create-events-actor")
 
-      within(10 seconds) {
+      within(10.seconds) {
         storeEventsActor ! cargoPlannedEvent
         expectMsgPF() {
           case m: CargoPlanned => system.log.debug("Stored CargoPlanned Event for AR actor {}", storeEventsActor)
@@ -78,7 +79,7 @@ class CargoAggregateRootActorSpec extends TestKit(ActorSystem("CargoTestSystem",
       val testProbe = TestProbe()
       testProbe watch storeEventsActor
 
-      within(10 seconds) {
+      within(10.seconds) {
         storeEventsActor ! PoisonPill
         testProbe.expectTerminated(storeEventsActor)
       }
