@@ -15,12 +15,9 @@
 // limitations under the License.
 package io.cafienne.bounded.cargosample.domain
 
+import io.cafienne.bounded.aggregate._
 import java.time.ZonedDateTime
 import java.util.UUID
-
-import io.cafienne.bounded.aggregate._
-
-import scala.annotation.meta.field
 import scala.util.control.NoStackTrace
 
 object CargoDomainProtocol {
