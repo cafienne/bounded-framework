@@ -1,4 +1,6 @@
-
+/**
+  * Copyright (C) 2016-2018 Cafienne B.V. <https://www.cafienne.io/bounded>
+  */
 lazy val basicSettings = {
   val currentScalaVersion = "2.12.3"
   val scala211Version     = "2.11.11"
