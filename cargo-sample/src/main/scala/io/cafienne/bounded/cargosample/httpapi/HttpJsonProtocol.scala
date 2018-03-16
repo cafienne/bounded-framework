@@ -13,16 +13,19 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-package io.cafienne.bounded.cargosample.persistence
+package io.cafienne.bounded.cargosample.httpapi
 
-import io.cafienne.bounded.cargosample.domain.CargoDomainProtocol.{CargoPlanned, NewRouteSpecified}
 import spray.json._
 
-object CargoDomainEventJsonProtocol extends DefaultJsonProtocol {
-  import io.cafienne.bounded.aggregate.CommandEventDatastructureJsonProtocol._
-  import io.cafienne.bounded.cargosample.domain.CargoDomainJsonProtocol._
+/**
+ * JSON protocol used by the http API.
+ * Contains specific protocol messages and the JSON serialization instructions for the Spray JSON format
+ * for all classes used with the http API.
+ */
+object HttpJsonProtocol extends DefaultJsonProtocol {
 
-  implicit val cargoPlannedFmt = jsonFormat4(CargoPlanned)
-  implicit val newRouteSpecifiedFmt = jsonFormat3(NewRouteSpecified)
+  case class ErrorResponse(msg: String)
+
+  implicit val errorResponsFmt = jsonFormat1(ErrorResponse)
 
 }
