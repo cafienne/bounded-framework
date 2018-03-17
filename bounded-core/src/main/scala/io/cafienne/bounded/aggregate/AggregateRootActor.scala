@@ -21,7 +21,7 @@ import io.cafienne.bounded.aggregate.AggregateRootActor.{GetState, NoState}
 import scala.reflect.ClassTag
 
 trait AggregateRootCreator {
-  def create[A <: AggregateRootActor :ClassTag](id: AggregateRootId): A
+  def create[A <: AggregateRootActor: ClassTag](id: AggregateRootId): A
 
 }
 
@@ -32,7 +32,10 @@ trait AggregateStateCreator {
 /**
   * The AggregateRootActor ensures focus on the transformation of domain commands towards domain event.
   */
-trait AggregateRootActor extends PersistentActor with AggregateStateCreator with ActorLogging {
+trait AggregateRootActor
+    extends PersistentActor
+    with AggregateStateCreator
+    with ActorLogging {
 
   /**
     * When extending the AggregateRootActor you must return the unique id of the aggregate root.
@@ -48,7 +51,6 @@ trait AggregateRootActor extends PersistentActor with AggregateStateCreator with
     * @return a sequence of events when everything is Right, or an Failure (Left)
     */
   def handleCommand(command: DomainCommand, state: AggregateState): Reply
-
 
   // Below this line is the internal implementation of the Aggregate Root Actor.
   private var internalState: Option[AggregateState] = None
@@ -68,7 +70,7 @@ trait AggregateRootActor extends PersistentActor with AggregateStateCreator with
 
       reply match {
         case Ok(events) => persistAll(events)(updateState)
-        case Ko(_) => ()
+        case Ko(_)      => ()
       }
 
       originalSender ! reply
@@ -79,8 +81,9 @@ trait AggregateRootActor extends PersistentActor with AggregateStateCreator with
 
   override def receiveRecover: Receive = {
     case _: RecoveryCompleted => // initialize further processing when required
-    case evt: DomainEvent => updateState(evt)
-    case other => log.warning("Received unknown event {} during recovery", other)
+    case evt: DomainEvent     => updateState(evt)
+    case other =>
+      log.warning("Received unknown event {} during recovery", other)
   }
 
 }

@@ -17,7 +17,6 @@ package io.cafienne.bounded.aggregate
 
 import java.util.UUID
 
-
 trait Id {
   def idAsString: String
 }

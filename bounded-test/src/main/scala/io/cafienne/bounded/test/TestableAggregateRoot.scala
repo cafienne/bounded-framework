@@ -30,7 +30,7 @@ import scala.concurrent.duration.Duration
 /**
   * Allows to test an aggregate root in isolation by creation of the aggregate root and the historic events in order
   * to create the state you want to test.
-  * Thereafter a command will result in a single or more events that can be asserted.
+  * Thereafter a command will result in no, a single or more events that can be asserted.
   * Next to that you have the possibility to assert the inside state of the Aggregate Root.
   *
   * An example of the use can be found in the cargo sample and looks like:
@@ -54,8 +54,10 @@ object TestableAggregateRoot {
     * @tparam A The Aggregate Root Type that is tested.
     * @return a TestableAggregateRoot instance that is initialized and available to give a DomainCommand to.
     */
-  def given[A <: AggregateRootActor](id: AggregateRootId, evt: DomainEvent*)
-                                    (implicit system: ActorSystem, timeout: Timeout, ctag: reflect.ClassTag[A]): TestableAggregateRoot[A] = {
+  def given[A <: AggregateRootActor](id: AggregateRootId, evt: DomainEvent*)(
+      implicit system: ActorSystem,
+      timeout: Timeout,
+      ctag: reflect.ClassTag[A]): TestableAggregateRoot[A] = {
     new TestableAggregateRoot[A](id, evt)
   }
 
@@ -66,14 +68,17 @@ object TestableAggregateRoot {
     * @tparam A The Aggregate Root Type that is tested.
     * @return a TestableAggregateRoot instance that is initialized and available to give a DomainCommand to.
     */
-  def given[A <: AggregateRootActor](id: AggregateRootId)
-                                    (implicit system: ActorSystem, timeout: Timeout, ctag: reflect.ClassTag[A]): TestableAggregateRoot[A] = {
+  def given[A <: AggregateRootActor](id: AggregateRootId)(
+      implicit system: ActorSystem,
+      timeout: Timeout,
+      ctag: reflect.ClassTag[A]): TestableAggregateRoot[A] = {
     new TestableAggregateRoot[A](id, Seq.empty[DomainEvent])
   }
 
   //The tested aggregate root makes use of an additional counter in the id in order to prevent collision of parallel running tests.
   private val atomicCounter: AtomicInteger = new AtomicInteger()
-  private def testId(id: AggregateRootId): AggregateRootId = TestId(id.idAsString + "-" + atomicCounter.getAndIncrement().toString)
+  private def testId(id: AggregateRootId): AggregateRootId =
+    TestId(id.idAsString + "-" + atomicCounter.getAndIncrement().toString)
 
   private case class TestId(id: String) extends AggregateRootId {
     override def idAsString: String = id
@@ -82,13 +87,18 @@ object TestableAggregateRoot {
   }
 }
 
-class TestableAggregateRoot[A <: AggregateRootActor] private(id: AggregateRootId, evt: Seq[DomainEvent])
-                                                    (implicit system: ActorSystem, timeout: Timeout, ctag: reflect.ClassTag[A]) {
+class TestableAggregateRoot[A <: AggregateRootActor] private (
+    id: AggregateRootId,
+    evt: Seq[DomainEvent])(implicit system: ActorSystem,
+                           timeout: Timeout,
+                           ctag: reflect.ClassTag[A]) {
 
   import TestableAggregateRoot.testId
   final val arTestId = testId(id)
 
-  private val storeEventsActor = system.actorOf(Props(classOf[CreateEventsInStoreActor], arTestId), "create-events-actor")
+  private val storeEventsActor = system.actorOf(
+    Props(classOf[CreateEventsInStoreActor], arTestId),
+    "create-events-actor")
   private var handledEvents: List[DomainEvent] = List.empty
 
   implicit val duration: Duration = timeout.duration
@@ -107,7 +117,8 @@ class TestableAggregateRoot[A <: AggregateRootActor] private(id: AggregateRootId
 
   private def createActor[B <: AggregateRootActor](id: AggregateRootId) = {
     handledEvents = List.empty
-    system.actorOf(Props(ctag.runtimeClass, arTestId), s"test-aggregate-$arTestId")
+    system.actorOf(Props(ctag.runtimeClass, arTestId),
+                   s"test-aggregate-$arTestId")
   }
 
   /**
@@ -119,17 +130,21 @@ class TestableAggregateRoot[A <: AggregateRootActor] private(id: AggregateRootId
     */
   def when(command: DomainCommand): TestableAggregateRoot[A] = {
     //TODO IT maybe a better idea to actually return the results in a testable matter. (HOW?)
-    if (command.id != id) throw new IllegalArgumentException(s"Command for Aggregate Root ${command.id} cannot be handled by this aggregate root with id $id")
-    aggregateRootActor = aggregateRootActor.fold(Some(createActor[A](arTestId)))(r => Some(r))
+    if (command.id != id)
+      throw new IllegalArgumentException(
+        s"Command for Aggregate Root ${command.id} cannot be handled by this aggregate root with id $id")
+    aggregateRootActor =
+      aggregateRootActor.fold(Some(createActor[A](arTestId)))(r => Some(r))
     val aggregateRootProbe = TestProbe()
     aggregateRootProbe watch aggregateRootActor.get
 
     aggregateRootProbe.send(aggregateRootActor.get, command)
 
     val events =
-      aggregateRootProbe.expectMsgPF[Seq[DomainEvent]](duration, "reply with events") {
-        case Ok(events) => events
-      }
+      aggregateRootProbe
+        .expectMsgPF[Seq[DomainEvent]](duration, "reply with events") {
+          case Ok(events) => events
+        }
 
     handledEvents ++= events
     this
@@ -143,7 +158,9 @@ class TestableAggregateRoot[A <: AggregateRootActor] private(id: AggregateRootId
     * @return Future with the AggregateState as defined for this Aggregate Root.
     */
   def currentState: Future[AggregateState] = {
-    aggregateRootActor.fold(Future.failed[AggregateState](new IllegalStateException("")))(actor => (actor ? GetState).mapTo[AggregateState])
+    aggregateRootActor.fold(
+      Future.failed[AggregateState](new IllegalStateException("")))(actor =>
+      (actor ? GetState).mapTo[AggregateState])
   }
 
   /**
@@ -157,6 +174,5 @@ class TestableAggregateRoot[A <: AggregateRootActor] private(id: AggregateRootId
   override def toString: String = {
     s"Aggregate Root ${ctag.runtimeClass.getSimpleName} ${id.idAsString}"
   }
-
 
 }

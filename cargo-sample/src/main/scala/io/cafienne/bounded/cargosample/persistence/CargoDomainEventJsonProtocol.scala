@@ -15,7 +15,10 @@
 // limitations under the License.
 package io.cafienne.bounded.cargosample.persistence
 
-import io.cafienne.bounded.cargosample.domain.CargoDomainProtocol.{CargoPlanned, NewRouteSpecified}
+import io.cafienne.bounded.cargosample.domain.CargoDomainProtocol.{
+  CargoPlanned,
+  NewRouteSpecified
+}
 import spray.json._
 
 object CargoDomainEventJsonProtocol extends DefaultJsonProtocol {
