@@ -14,6 +14,10 @@ trait AggregateRootCreator {
 
 }
 
+trait AggregateState {
+  def update(event: DomainEvent): AggregateState
+}
+
 trait AggregateStateCreator {
   def newState(evt: DomainEvent): AggregateState
 }
