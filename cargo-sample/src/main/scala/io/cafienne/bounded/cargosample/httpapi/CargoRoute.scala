@@ -115,7 +115,7 @@ class CargoRoute(commandGateway: CommandGateway, cargoQueries: CargoQueries)(
         required = true,
         paramType = "body",
         dataType =
-          "io.cafienne.bounded.cargosample.httpapi.HttpJsonProtcol$PlanCargo")
+          "io.cafienne.bounded.cargosample.httpapi.HttpJsonProtocol$PlanCargo")
     ))
   @ApiResponses(
     Array(
