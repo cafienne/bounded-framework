@@ -32,7 +32,7 @@ class DefaultCommandGateway[A <: AggregateRootCreator](
       implicit system: ActorSystem): ActorRef = {
     aggregateRootInstanceActors.getOrElseUpdate(
       c.id,
-      system.actorOf(aggregateRootCreator.create(c.id)))
+      system.actorOf(aggregateRootCreator.props(c.id)))
   }
 
   override def sendAndAsk[T <: DomainCommand](command: T)(
