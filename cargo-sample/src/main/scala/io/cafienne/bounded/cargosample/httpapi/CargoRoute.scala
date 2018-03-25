@@ -10,17 +10,15 @@ import javax.ws.rs.Path
 import akka.actor.ActorSystem
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import akka.http.scaladsl.model.StatusCodes
-import akka.event.Logging
-import akka.http.scaladsl.common.{EntityStreamingSupport, JsonEntityStreamingSupport}
+import akka.event.{Logging, LoggingAdapter}
 import akka.http.scaladsl.server.{PathMatchers, Route}
-import io.cafienne.bounded.aggregate.{CommandGateway, MetaData}
-import io.cafienne.bounded.cargosample.domain.{CargoCommandValidators, CargoCommandValidatorsImpl, CargoDomainProtocol}
+import io.cafienne.bounded.aggregate.{CommandGateway, Ko, MetaData, Ok}
+import io.cafienne.bounded.cargosample.domain.{CargoCommandValidatorsImpl, CargoDomainProtocol}
 import io.cafienne.bounded.cargosample.domain.CargoDomainProtocol.{CargoId, CargoNotFound, CargoPlanned, TrackingId}
 import io.cafienne.bounded.cargosample.projections.CargoQueries
 import io.cafienne.bounded.cargosample.projections.QueriesJsonProtocol.CargoViewItem
 import io.swagger.annotations._
 
-import scala.concurrent.ExecutionContext
 import scala.util.{Failure, Success}
 
 @Path("/")
@@ -32,14 +30,11 @@ class CargoRoute(commandGateway: CommandGateway, cargoQueries: CargoQueries)(
     extends CargoCommandValidatorsImpl(actorSystem)
     with SprayJsonSupport {
 
-  import spray.json._
   import akka.http.scaladsl.server.Directives._
   import HttpJsonProtocol._
-  import io.cafienne.bounded.cargosample.domain.CargoDomainJsonProtocol._
   import io.cafienne.bounded.cargosample.persistence.CargoDomainEventJsonProtocol._
 
-//  implicit val jsonStreamingSupport: JsonEntityStreamingSupport =
-//    EntityStreamingSupport.json()
+  val logger: LoggingAdapter = Logging(actorSystem, getClass)
 
   val routes: Route = { getCargo ~ planCargo }
 
@@ -132,10 +127,19 @@ class CargoRoute(commandGateway: CommandGateway, cargoQueries: CargoQueries)(
                 TrackingId(planCargo.trackingId),
                 planCargo.routeSpecification)
           )) {
-            case Success(value: CargoPlanned) => complete(StatusCodes.Created -> value)
-            case Success(Seq(value: CargoPlanned, _*)) => complete(StatusCodes.Created -> value)
-            case Success(other) => complete(StatusCodes.NonAuthoritativeInformation -> other.toString)
+            case Success(Ok(List(value: CargoPlanned, _*))) =>
+              logger.debug("API received command reply {}", value)
+              complete(StatusCodes.Created -> value)
+            case Success(Ko(failure)) =>
+              logger.warning("API received Ko {} for command: PlanCargo", failure)
+              failure match {
+                case f => complete(StatusCodes.InternalServerError -> ErrorResponse(f.toString))
+              }
+            case Success(other) =>
+              logger.error("API received Success reply it does not understand: {}", other)
+              complete(StatusCodes.NonAuthoritativeInformation -> other.toString)
             case Failure(err) =>
+              logger.warning("API received a failed Future with {}", err)
               complete(StatusCodes.InternalServerError -> ErrorResponse(
                   err + Option(err.getCause)
                     .map(t => s" due to ${t.getMessage}")

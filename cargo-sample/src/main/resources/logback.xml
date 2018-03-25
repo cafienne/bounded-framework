@@ -7,7 +7,7 @@
             </Pattern>
         </layout>
     </appender>
-    <logger name="io.cafienne.bounded" level="info"
+    <logger name="io.cafienne.bounded" level="debug"
             additivity="false">
         <appender-ref ref="STDOUT" />
     </logger>
@@ -26,7 +26,7 @@
     <logger name="io.swagger" level="warn" additivity="false">
         <appender-ref ref="STDOUT"></appender-ref>
     </logger>
-    <root level="info">
+    <root level="debug">
         <appender-ref ref="STDOUT" />
     </root>
 </configuration>
