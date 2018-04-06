@@ -62,7 +62,4 @@ object Cargo extends AggregateRootCreator {
 
   final val aggregateRootTag = "ar-cargo" // used to tag the events and read them
 
-//  override def create[A <: AggregateRootActor: ClassTag](
-//      id: AggregateRootId): A = new Cargo(id).asInstanceOf[A]
-
 }
