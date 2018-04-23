@@ -5,31 +5,50 @@
 package io.cafienne.bounded.test
 
 import akka.actor._
+import akka.persistence.inmemory.extension.{InMemoryJournalStorage, InMemorySnapshotStorage, StorageExtension}
 import akka.testkit.TestProbe
 import akka.util.Timeout
 import io.cafienne.bounded.aggregate._
-import io.cafienne.bounded.akka.persistence.eventmaterializers.AbstractEventMaterializer
+import io.cafienne.bounded.akka.persistence.eventmaterializers.{AbstractEventMaterializer, EventMaterializers}
 
+import scala.concurrent.{ExecutionContext, Future}
 import scala.concurrent.duration.Duration
 
+object TestableProjection {
 
-class TestableProjection(implicit system: ActorSystem, timeout: Timeout) {
+  def given(evt: Seq[DomainEvent])(implicit system: ActorSystem, timeout: Timeout): TestableProjection = {
+    val tp = TestProbe()
+    tp.send(StorageExtension(system).journalStorage, InMemoryJournalStorage.ClearJournal)
+    tp.expectMsg(akka.actor.Status.Success(""))
+    tp.send(StorageExtension(system).snapshotStorage, InMemorySnapshotStorage.ClearSnapshots)
+    tp.expectMsg(akka.actor.Status.Success(""))
 
-  def startProjection(projector: AbstractEventMaterializer) = {
-
-  }
-
-  def addEvents(evt: Seq[DomainEvent]) = {
-
+    val testedProjection = new TestableProjection(system, timeout)
+    testedProjection.storeEvents(evt)
+    testedProjection
   }
 
 }
 
-object TestableProjection {
+class TestableProjection private (system: ActorSystem, timeout: Timeout) {
+  private var eventMaterializers: Option[EventMaterializers] = _
+  private implicit val  executionContext: ExecutionContext = system.dispatcher
+  private implicit val actorSystem: ActorSystem = system
 
-  def given(evt: Seq[DomainEvent])(implicit system: ActorSystem, timeout: Timeout): Unit = {
+  def startProjection(projector: AbstractEventMaterializer): Future[EventMaterializers.ReplayResult] = {
+    eventMaterializers = Some(new EventMaterializers(List(projector)))
+    eventMaterializers.get.startUp(true).map(list => list.head)
+  }
 
-    val storeEventsActor = system.actorOf(Props(classOf[CreateEventsInStoreActor], "tmp"), "create-events-actor")
+  def addEvents(evt: Seq[DomainEvent]): Unit = {
+    eventMaterializers.fold(throw new IllegalStateException("You start the projection before you add events"))(_ => {
+      storeEvents(evt)
+    })
+  }
+
+  // Blocking way to store events.
+  private def storeEvents(evt: Seq[DomainEvent]): Unit = {
+    val storeEventsActor = system.actorOf(Props(classOf[CreateEventsInStoreActor], evt.head.id), "create-events-actor")
 
     implicit val duration: Duration = timeout.duration
 
@@ -42,7 +61,10 @@ object TestableProjection {
     }
 
     storeEventsActor ! PoisonPill
-    testProbe.expectTerminated(storeEventsActor)
+    val terminated = testProbe.expectTerminated(storeEventsActor)
+    assert(terminated.existenceConfirmed)
+    //This sleep ensures that the persisted events are propagated towards the projections.
+    Thread.sleep(2000)
   }
 
 }
