@@ -54,7 +54,7 @@ class CargoQueriesNewSpec
 
   // Create Query and Writer for testing
   object cargoQueries extends CargoQueriesImpl()
-  val cargoWriter        = new CargoViewProjectionWriter(system) with ReadJournalOffsetStore with OffsetTypeSequence
+  val cargoWriter = new CargoViewProjectionWriter(system) with ReadJournalOffsetStore with OffsetTypeSequence
 
   "Cargo Query" must {
     "add and retrieve valid cargo based on replay" in {

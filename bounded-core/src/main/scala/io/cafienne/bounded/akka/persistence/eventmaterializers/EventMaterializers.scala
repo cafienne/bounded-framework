@@ -18,7 +18,6 @@ class EventMaterializers(replayables: List[Resumable]) {
 
   lazy val logger: Logger = Logger(LoggerFactory.getLogger("bounded.eventmaterializers"))
 
-
   /**
     * Start event listeners in given order: First do a replay and *after* all replays have
     * finished start listening for new events (register listener)

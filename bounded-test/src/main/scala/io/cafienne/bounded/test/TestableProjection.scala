@@ -17,6 +17,7 @@ import scala.concurrent.duration.Duration
 object TestableProjection {
 
   def given(evt: Seq[DomainEvent])(implicit system: ActorSystem, timeout: Timeout): TestableProjection = {
+    //Cleanup the store before this test is ran.
     val tp = TestProbe()
     tp.send(StorageExtension(system).journalStorage, InMemoryJournalStorage.ClearJournal)
     tp.expectMsg(akka.actor.Status.Success(""))
@@ -32,8 +33,8 @@ object TestableProjection {
 
 class TestableProjection private (system: ActorSystem, timeout: Timeout) {
   private var eventMaterializers: Option[EventMaterializers] = _
-  private implicit val  executionContext: ExecutionContext = system.dispatcher
-  private implicit val actorSystem: ActorSystem = system
+  private implicit val executionContext: ExecutionContext    = system.dispatcher
+  private implicit val actorSystem: ActorSystem              = system
 
   def startProjection(projector: AbstractEventMaterializer): Future[EventMaterializers.ReplayResult] = {
     eventMaterializers = Some(new EventMaterializers(List(projector)))
@@ -65,6 +66,7 @@ class TestableProjection private (system: ActorSystem, timeout: Timeout) {
     assert(terminated.existenceConfirmed)
     //This sleep ensures that the persisted events are propagated towards the projections.
     Thread.sleep(2000)
+    //TODO find a way to check if the stream processed the messages given by store events
   }
 
 }
