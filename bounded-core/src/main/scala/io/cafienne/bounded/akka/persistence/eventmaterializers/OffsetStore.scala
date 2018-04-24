@@ -66,7 +66,7 @@ class CassandraOffsetStore(readJournal: CassandraReadJournal, offsetType: Offset
     readJournal.session.executeWrite(
       "CREATE TABLE IF NOT EXISTS akka.vw_offsetstore (view_identifier text PRIMARY KEY, offset_type text, offset_value text);"
     ),
-    3.seconds
+    6.seconds
   )
 
   override def saveOffset(viewIdentifier: String, offset: Offset): Future[Unit] = {
