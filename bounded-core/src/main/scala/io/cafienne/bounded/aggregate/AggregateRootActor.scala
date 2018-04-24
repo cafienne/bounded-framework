@@ -23,7 +23,7 @@ trait AggregateStateCreator {
 /**
   * The AggregateRootActor ensures focus on the transformation of domain commands towards domain event.
   */
-trait AggregateRootActor extends PersistentActor with AggregateStateCreator with ActorLogging {
+trait AggregateRootActor[A <: AggregateState] extends PersistentActor with AggregateStateCreator with ActorLogging {
 
   /**
     * When extending the AggregateRootActor you must return the unique id of the aggregate root.
@@ -35,10 +35,17 @@ trait AggregateRootActor extends PersistentActor with AggregateStateCreator with
     * When extending the AggregateRootActor you MUST implement the handleCommand method.
     *
     * @param command one of the commands your aggregate root expects
-    * @param state of the Aggregate Root at the moment of handling command
+    * @param state of the Aggregate Root at the moment of handling command, optional: state could not be set yet
     * @return a sequence of events when everything is Right, or an Failure (Left)
     */
-  def handleCommand(command: DomainCommand, state: AggregateState): Reply
+  def handleCommand(command: DomainCommand, state: Option[A]): Reply
+
+  private def handleCommand(command: DomainCommand, state: AggregateState): Reply = {
+    state match {
+      case NoState => handleCommand(command, None)
+      case _ => handleCommand(command, Some(state.asInstanceOf[A]))
+    }
+  }
 
   // Below this line is the internal implementation of the Aggregate Root Actor.
   private var internalState: Option[AggregateState] = None
@@ -79,13 +86,12 @@ trait AggregateRootActor extends PersistentActor with AggregateStateCreator with
 
   override def receiveRecover: Receive = {
     case _: RecoveryCompleted                               => // initialize further processing when required
-    case SnapshotOffer(_, snapshot: Option[AggregateState]) => internalState = snapshot
+    case SnapshotOffer(_, snapshot: Option[A]) => internalState = snapshot
     case evt: DomainEvent                                   => updateState(evt)
 
     case other =>
       log.warning("Received unknown event {} during recovery", other)
   }
-
 }
 
 object AggregateRootActor {

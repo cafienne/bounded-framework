@@ -16,13 +16,11 @@ import scala.collection.immutable.Seq
   * @param cargoId unique identifier for cargo.
   */
 class Cargo(cargoId: AggregateRootId, locationsProvider: LocationsProvider)
-    extends AggregateRootActor
-    with AggregateStateCreator
-    with ActorLogging {
+  extends AggregateRootActor[CargoAggregateState] {
 
   override def aggregateId: AggregateRootId = cargoId
 
-  override def handleCommand(command: DomainCommand, currentState: AggregateState): Reply = {
+  override def handleCommand(command: DomainCommand, state: Option[CargoAggregateState]): Reply = {
     command match {
       case cmd: PlanCargo =>
         Ok(Seq(CargoPlanned(cmd.metaData, cmd.cargoId, cmd.trackingId, cmd.routeSpecification)))

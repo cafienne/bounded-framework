@@ -44,7 +44,7 @@ object TestableAggregateRoot {
     * @tparam A The Aggregate Root Type that is tested.
     * @return a TestableAggregateRoot instance that is initialized and available to give a DomainCommand to.
     */
-  def given[A <: AggregateRootActor](
+  def given[A <: AggregateRootActor[_]](
     creator: AggregateRootCreator,
     id: AggregateRootId,
     evt: DomainEvent*
@@ -59,7 +59,7 @@ object TestableAggregateRoot {
     * @tparam A The Aggregate Root Type that is tested.
     * @return a TestableAggregateRoot instance that is initialized and available to give a DomainCommand to.
     */
-  def given[A <: AggregateRootActor](
+  def given[A <: AggregateRootActor[_]](
     creator: AggregateRootCreator,
     id: AggregateRootId
   )(implicit system: ActorSystem, timeout: Timeout, ctag: reflect.ClassTag[A]): TestableAggregateRoot[A] = {
@@ -79,7 +79,7 @@ object TestableAggregateRoot {
   }
 }
 
-class TestableAggregateRoot[A <: AggregateRootActor] private (
+class TestableAggregateRoot[A <: AggregateRootActor[_]] private (
   creator: AggregateRootCreator,
   id: AggregateRootId,
   evt: Seq[DomainEvent]
@@ -117,7 +117,7 @@ class TestableAggregateRoot[A <: AggregateRootActor] private (
 //    obj.instance.asInstanceOf[AggregateRootCreator]
 //  }
 
-  private def createActor[B <: AggregateRootActor](id: AggregateRootId) = {
+  private def createActor[B <: AggregateRootActor[_]](id: AggregateRootId) = {
     handledEvents = List.empty
     system.actorOf(creator.props(arTestId), s"test-aggregate-$arTestId")
   }
