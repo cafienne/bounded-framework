@@ -4,15 +4,20 @@
 
 package io.cafienne.bounded.test
 
+import java.util.UUID
+
 import akka.actor._
 import akka.persistence.inmemory.extension.{InMemoryJournalStorage, InMemorySnapshotStorage, StorageExtension}
 import akka.testkit.TestProbe
 import akka.util.Timeout
 import io.cafienne.bounded.aggregate._
-import io.cafienne.bounded.akka.persistence.eventmaterializers.{AbstractEventMaterializer, EventMaterializers}
-
+import io.cafienne.bounded.akka.persistence.eventmaterializers.{
+  AbstractEventMaterializer,
+  EventMaterializers,
+  EventProcessed
+}
+import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Future}
-import scala.concurrent.duration.Duration
 
 object TestableProjection {
 
@@ -32,11 +37,20 @@ object TestableProjection {
 }
 
 class TestableProjection private (system: ActorSystem, timeout: Timeout) {
+
   private var eventMaterializers: Option[EventMaterializers] = _
   private implicit val executionContext: ExecutionContext    = system.dispatcher
   private implicit val actorSystem: ActorSystem              = system
+  private var materializerId: Option[UUID]                   = None
+
+  val eventStreamListener = TestProbe()
+
+  if (!system.settings.config.hasPath("io.bounded.eventmaterializers.publish") || !system.settings.config.getBoolean("io.bounded.eventmaterializers.publish")) {
+    system.log.error("Config property io.bounded.eventmaterializers.publish must be enabled")
+  }
 
   def startProjection(projector: AbstractEventMaterializer): Future[EventMaterializers.ReplayResult] = {
+    materializerId = Some(projector.materializerId)
     eventMaterializers = Some(new EventMaterializers(List(projector)))
     eventMaterializers.get.startUp(true).map(list => list.head)
   }
@@ -51,10 +65,10 @@ class TestableProjection private (system: ActorSystem, timeout: Timeout) {
   private def storeEvents(evt: Seq[DomainEvent]): Unit = {
     val storeEventsActor = system.actorOf(Props(classOf[CreateEventsInStoreActor], evt.head.id), "create-events-actor")
 
-    implicit val duration: Duration = timeout.duration
-
     val testProbe = TestProbe()
     testProbe watch storeEventsActor
+
+    system.eventStream.subscribe(eventStreamListener.ref, classOf[EventProcessed])
 
     evt foreach { event =>
       testProbe.send(storeEventsActor, event)
@@ -64,9 +78,15 @@ class TestableProjection private (system: ActorSystem, timeout: Timeout) {
     storeEventsActor ! PoisonPill
     val terminated = testProbe.expectTerminated(storeEventsActor)
     assert(terminated.existenceConfirmed)
-    //This sleep ensures that the persisted events are propagated towards the projections.
-    Thread.sleep(2000)
-    //TODO find a way to check if the stream processed the messages given by store events
+
+    waitTillLastEventIsProcessed(evt)
   }
 
+  private def waitTillLastEventIsProcessed(evt: Seq[DomainEvent]) = {
+    if (materializerId.isDefined) {
+      eventStreamListener.fishForSpecificMessage(2.seconds, "wait till last event is processed") {
+        case e: EventProcessed if materializerId.get == e.materializerId && evt.last == e.evt => ()
+      }
+    }
+  }
 }
