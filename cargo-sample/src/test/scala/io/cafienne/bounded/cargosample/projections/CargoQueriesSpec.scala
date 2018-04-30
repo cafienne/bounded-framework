@@ -88,6 +88,6 @@ class CargoQueriesSpec extends WordSpec with Matchers with ScalaFutures with Bef
   }
 
   override def afterAll {
-    TestKit.shutdownActorSystem(system)
+    TestKit.shutdownActorSystem(system, 30.seconds, verifySystemShutdown = true)
   }
 }
