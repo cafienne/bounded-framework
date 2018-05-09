@@ -21,7 +21,8 @@ import org.slf4j.LoggerFactory
 import scala.collection.parallel.mutable
 import scala.concurrent.Future
 
-class CargoViewProjectionWriter(actorSystem: ActorSystem) extends AbstractReplayableEventMaterializer(actorSystem) {
+class CargoViewProjectionWriter(actorSystem: ActorSystem, lmdbClient: LmdbClient)
+    extends AbstractReplayableEventMaterializer(actorSystem) {
 
   /**
     * Tagname used to identify eventstream to listen to
@@ -33,7 +34,7 @@ class CargoViewProjectionWriter(actorSystem: ActorSystem) extends AbstractReplay
     */
   override val matMappingName: String = "cargo-view"
 
-  import CargoViewProjectionWriter._
+//  import CargoViewProjectionWriter._
 
   override lazy val logger: Logger = Logger(LoggerFactory.getLogger(CargoViewProjectionWriter.getClass))
 
@@ -43,24 +44,22 @@ class CargoViewProjectionWriter(actorSystem: ActorSystem) extends AbstractReplay
     try {
       evt match {
         case drEvent: CargoPlanned =>
-          addOrUpdate(
-            CargoViewItem(
-              drEvent.cargoId,
-              drEvent.routeSpecification.origin.name,
-              drEvent.routeSpecification.destination.name,
-              drEvent.routeSpecification.arrivalDeadline
-            )
+          val cargoViewItem = CargoViewItem(
+            drEvent.cargoId,
+            drEvent.routeSpecification.origin.name,
+            drEvent.routeSpecification.destination.name,
+            drEvent.routeSpecification.arrivalDeadline
           )
+          lmdbClient.put(drEvent.cargoId.idAsString, cargoViewItem.toJson.compactPrint)
           Future.successful(Done)
         case drEvent: NewRouteSpecified =>
-          addOrUpdate(
-            CargoViewItem(
-              drEvent.id,
-              drEvent.routeSpecification.origin.name,
-              drEvent.routeSpecification.destination.name,
-              drEvent.routeSpecification.arrivalDeadline
-            )
+          val cargoViewItem = CargoViewItem(
+            drEvent.id,
+            drEvent.routeSpecification.origin.name,
+            drEvent.routeSpecification.destination.name,
+            drEvent.routeSpecification.arrivalDeadline
           )
+          lmdbClient.put(drEvent.id.idAsString, cargoViewItem.toJson.compactPrint)
           Future.successful(Done)
         case _ =>
           Future.successful(Done)
@@ -79,19 +78,4 @@ class CargoViewProjectionWriter(actorSystem: ActorSystem) extends AbstractReplay
 
 }
 
-object CargoViewProjectionWriter {
-  private val inMemCargoStore = mutable.ParHashMap.empty[CargoId, CargoViewItem]
-
-  private def addOrUpdate(cargoViewItem: CargoViewItem) = {
-    inMemCargoStore.update(cargoViewItem.id, cargoViewItem)
-  }
-
-  def getCargo(cargoId: CargoId): Future[CargoViewItem] = {
-    inMemCargoStore
-      .get(cargoId)
-      .fold(Future.failed[CargoViewItem](CargoNotFound(s"No Cargo item found for id $cargoId")))(
-        item => Future.successful(item)
-      )
-  }
-
-}
+object CargoViewProjectionWriter

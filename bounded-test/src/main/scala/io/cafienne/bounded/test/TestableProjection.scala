@@ -45,10 +45,10 @@ class TestableProjection private (system: ActorSystem, timeout: Timeout) {
 
   val eventStreamListener = TestProbe()
 
-  if (!system.settings.config.hasPath("io.bounded.eventmaterializers.publish") || !system.settings.config.getBoolean(
-        "io.bounded.eventmaterializers.publish"
+  if (!system.settings.config.hasPath("bounded.eventmaterializers.publish") || !system.settings.config.getBoolean(
+        "bounded.eventmaterializers.publish"
       )) {
-    system.log.error("Config property io.bounded.eventmaterializers.publish must be enabled")
+    system.log.error("Config property bounded.eventmaterializers.publish must be enabled")
   }
 
   def startProjection(projector: AbstractEventMaterializer): Future[EventMaterializers.ReplayResult] = {
