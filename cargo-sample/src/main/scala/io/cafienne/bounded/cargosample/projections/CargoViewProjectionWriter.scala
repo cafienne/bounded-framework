@@ -43,23 +43,23 @@ class CargoViewProjectionWriter(actorSystem: ActorSystem, lmdbClient: LmdbClient
   override def handleEvent(evt: Any): Future[Done] = {
     try {
       evt match {
-        case drEvent: CargoPlanned =>
+        case event: CargoPlanned =>
           val cargoViewItem = CargoViewItem(
-            drEvent.cargoId,
-            drEvent.routeSpecification.origin.name,
-            drEvent.routeSpecification.destination.name,
-            drEvent.routeSpecification.arrivalDeadline
+            event.cargoId,
+            event.routeSpecification.origin.name,
+            event.routeSpecification.destination.name,
+            event.routeSpecification.arrivalDeadline
           )
-          lmdbClient.put(drEvent.cargoId.idAsString, cargoViewItem.toJson.compactPrint)
+          lmdbClient.put(event.cargoId.idAsString, cargoViewItem.toJson.compactPrint)
           Future.successful(Done)
-        case drEvent: NewRouteSpecified =>
+        case event: NewRouteSpecified =>
           val cargoViewItem = CargoViewItem(
-            drEvent.id,
-            drEvent.routeSpecification.origin.name,
-            drEvent.routeSpecification.destination.name,
-            drEvent.routeSpecification.arrivalDeadline
+            event.id,
+            event.routeSpecification.origin.name,
+            event.routeSpecification.destination.name,
+            event.routeSpecification.arrivalDeadline
           )
-          lmdbClient.put(drEvent.id.idAsString, cargoViewItem.toJson.compactPrint)
+          lmdbClient.put(event.id.idAsString, cargoViewItem.toJson.compactPrint)
           Future.successful(Done)
         case _ =>
           Future.successful(Done)
