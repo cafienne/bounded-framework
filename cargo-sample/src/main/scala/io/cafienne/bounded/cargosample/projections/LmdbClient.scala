@@ -21,10 +21,9 @@ trait LmdbClient {
 
 }
 
-class CargoLmdbClient extends LmdbClient {
+class CargoLmdbClient(lmdbPath: File) extends LmdbClient {
 
   private val dbSize   = 1000000
-  private val lmdbPath = new File("target/cargo")
 
   val env = Env.create
     .setMapSize(dbSize)
@@ -32,7 +31,7 @@ class CargoLmdbClient extends LmdbClient {
     .setMaxReaders(100)
     .open(lmdbPath, EnvFlags.MDB_NOSUBDIR)
 
-  val dbi = env.openDbi("cargo", MDB_CREATE)
+  val dbi = env.openDbi(CargoLmdbClient.dbName, MDB_CREATE)
 
   override def put(key: String, value: String): Unit = {
     val txn = env.txnWrite()
@@ -72,4 +71,8 @@ class CargoLmdbClient extends LmdbClient {
     throw new IllegalStateException("Not implemented")
   }
 
+}
+
+object CargoLmdbClient {
+  val dbName = "cargo"
 }

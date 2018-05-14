@@ -4,6 +4,8 @@
 
 package io.cafienne.bounded.cargosample
 
+import java.io.File
+
 import akka.actor.ActorSystem
 import akka.event.{Logging, LoggingAdapter}
 import akka.http.scaladsl.Http
@@ -40,7 +42,8 @@ object Boot extends App with Configured {
     }
   }
 
-  val cargoLmdbClient = new CargoLmdbClient()
+  val lmdbPath = config.getString("application.lmdb-path")
+  val cargoLmdbClient = new CargoLmdbClient(new File(lmdbPath, "cargo"))
 
   val cargoQueries              = new CargoQueriesImpl(cargoLmdbClient)
   val cargoViewProjectionWriter = new CargoViewProjectionWriter(system, cargoLmdbClient) with OffsetStoreProvider

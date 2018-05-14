@@ -4,6 +4,7 @@
 
 package io.cafienne.bounded.cargosample.projections
 
+import java.io.File
 import java.time.ZonedDateTime
 import java.util.UUID
 
@@ -51,7 +52,8 @@ class CargoQueriesSpec extends WordSpec with Matchers with ScalaFutures with Bef
   val trackingId         = TrackingId(UUID.fromString("67C1FBD1-E634-4B4E-BF31-BBA6D039C264"))
   val routeSpecification = RouteSpecification(Location("Amsterdam"), Location("New York"), expectedDeliveryTime)
 
-  val cargoLmdbClient = new CargoLmdbClient()
+  val lmdbFile = new File("target", "cargo")
+  val cargoLmdbClient = new CargoLmdbClient(lmdbFile)
 
   // Create Query and Writer for testing
   object cargoQueries extends CargoQueriesImpl(cargoLmdbClient)
@@ -91,5 +93,16 @@ class CargoQueriesSpec extends WordSpec with Matchers with ScalaFutures with Bef
 
   override def afterAll {
     TestKit.shutdownActorSystem(system, 30.seconds, verifySystemShutdown = true)
+    cleanupDb()
+  }
+
+  private def cleanupDb() = {
+    val txn = cargoLmdbClient.env.txnWrite()
+    try {
+      cargoLmdbClient.dbi.drop(txn)
+      txn.commit()
+    } finally {
+      txn.close()
+    }
   }
 }
