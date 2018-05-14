@@ -34,8 +34,6 @@ class CargoViewProjectionWriter(actorSystem: ActorSystem, lmdbClient: LmdbClient
     */
   override val matMappingName: String = "cargo-view"
 
-//  import CargoViewProjectionWriter._
-
   override lazy val logger: Logger = Logger(LoggerFactory.getLogger(CargoViewProjectionWriter.getClass))
 
   override def handleReplayEvent(evt: Any): Future[Done] = handleEvent(evt)
