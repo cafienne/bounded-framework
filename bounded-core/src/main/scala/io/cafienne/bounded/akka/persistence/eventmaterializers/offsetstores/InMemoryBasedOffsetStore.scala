@@ -4,6 +4,7 @@
 
 package io.cafienne.bounded.akka.persistence.eventmaterializers.offsetstores
 
+import akka.Done
 import akka.persistence.query.Offset
 
 import scala.concurrent.Future
@@ -24,6 +25,16 @@ class InMemoryBasedOffsetStore extends OffsetStore {
 
   override def getOffset(viewIdentifier: String): Future[Offset] = {
     Future.successful(store.getOrElse(viewIdentifier, Offset.noOffset))
+  }
+
+  override def clear(): Future[Done] = {
+    store.clear()
+    Future.successful(Done)
+  }
+
+  override def clear(viewIdentifier: String): Future[Done] = {
+    store.remove(viewIdentifier)
+    Future.successful(Done)
   }
 
 }

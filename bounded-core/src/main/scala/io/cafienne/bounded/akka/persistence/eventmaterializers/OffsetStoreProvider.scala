@@ -4,6 +4,7 @@
 
 package io.cafienne.bounded.akka.persistence.eventmaterializers
 
+import akka.Done
 import akka.persistence.query.Offset
 import com.typesafe.config.Config
 import io.cafienne.bounded.akka.ActorSystemProvider
@@ -14,6 +15,7 @@ import io.cafienne.bounded.akka.persistence.eventmaterializers.offsetstores.{
   OffsetStore
 }
 
+import scala.collection.mutable
 import scala.concurrent.Future
 
 trait OffsetStoreProvider extends OffsetStore {
@@ -28,23 +30,42 @@ trait OffsetStoreProvider extends OffsetStore {
 
   override def getOffset(viewIdentifier: String): Future[Offset] = store.getOffset(viewIdentifier)
 
+  override def clear(): Future[Done] = store.clear()
+
+  override def clear(viewIdentifier: String): Future[Done] = store.clear(viewIdentifier)
+
 }
 
 object OffsetStoreProvider {
 
-  private var store: Option[OffsetStore] = None
+  val ImMemoryStoreName = "inmemory"
+  val LmdbStoreName     = "lmdb"
+
+  private val store = mutable.Map.empty[String, OffsetStore]
 
   def getStore(offsetStoreConfig: Config): OffsetStore = {
-    if (store.isEmpty) {
-      store = offsetStoreConfig.getString("type") match {
-        case "lmdb" =>
-          val lmdbConfig = new LmdbConfig(offsetStoreConfig)
-          Some(LmdbOffsetStore(lmdbConfig))
-        case "inmemory" => Some(new InMemoryBasedOffsetStore())
-        case other      => throw new RuntimeException(s"Offsetstore $other is not supported by OffsetStoreProvider")
-      }
+    offsetStoreConfig.getString("type") match {
+      case LmdbStoreName     => getLmdbStore(offsetStoreConfig)
+      case ImMemoryStoreName => getInMemoryStore()
+      case other             => throw new RuntimeException(s"Offsetstore $other is not supported by OffsetStoreProvider")
     }
-    store.get
+  }
+
+  def getInMemoryStore(): OffsetStore = {
+    store.getOrElse(ImMemoryStoreName, {
+      val inmemOffsetStore = new InMemoryBasedOffsetStore()
+      store.put(ImMemoryStoreName, inmemOffsetStore)
+      inmemOffsetStore
+    })
+  }
+
+  def getLmdbStore(offsetStoreConfig: Config): OffsetStore = {
+    store.getOrElse(LmdbStoreName, {
+      val lmdbConfig      = new LmdbConfig(offsetStoreConfig)
+      val lmdbOffsetStore = LmdbOffsetStore(lmdbConfig)
+      store.put(LmdbStoreName, lmdbOffsetStore)
+      lmdbOffsetStore
+    })
   }
 
 }

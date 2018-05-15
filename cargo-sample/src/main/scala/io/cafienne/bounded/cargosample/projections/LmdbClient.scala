@@ -23,7 +23,7 @@ trait LmdbClient {
 
 class CargoLmdbClient(lmdbPath: File) extends LmdbClient {
 
-  private val dbSize   = 1000000
+  private val dbSize = 1000000
 
   val env = Env.create
     .setMapSize(dbSize)

@@ -14,7 +14,7 @@ import akka.event.{Logging, LoggingAdapter}
 import akka.http.scaladsl.server.{PathMatchers, Route}
 import io.cafienne.bounded.aggregate.{CommandGateway, Ko, MetaData, Ok}
 import io.cafienne.bounded.cargosample.domain.{CargoCommandValidatorsImpl, CargoDomainProtocol}
-import io.cafienne.bounded.cargosample.domain.CargoDomainProtocol.{CargoId, CargoNotFound, CargoPlanned, TrackingId}
+import io.cafienne.bounded.cargosample.domain.CargoDomainProtocol.{CargoId, CargoPlanned, TrackingId}
 import io.cafienne.bounded.cargosample.projections.CargoQueries
 import io.cafienne.bounded.cargosample.projections.QueriesJsonProtocol.CargoViewItem
 import io.swagger.annotations._

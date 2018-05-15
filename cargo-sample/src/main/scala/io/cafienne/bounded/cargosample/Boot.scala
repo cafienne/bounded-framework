@@ -42,7 +42,7 @@ object Boot extends App with Configured {
     }
   }
 
-  val lmdbPath = config.getString("application.lmdb-path")
+  val lmdbPath        = config.getString("application.lmdb-path")
   val cargoLmdbClient = new CargoLmdbClient(new File(lmdbPath, "cargo"))
 
   val cargoQueries              = new CargoQueriesImpl(cargoLmdbClient)

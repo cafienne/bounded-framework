@@ -14,8 +14,10 @@ import io.cafienne.bounded.aggregate._
 import io.cafienne.bounded.akka.persistence.eventmaterializers.{
   AbstractEventMaterializer,
   EventMaterializers,
-  EventProcessed
+  EventProcessed,
+  OffsetStoreProvider
 }
+
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -30,6 +32,7 @@ object TestableProjection {
     tp.expectMsg(akka.actor.Status.Success(""))
 
     val testedProjection = new TestableProjection(system, timeout)
+    OffsetStoreProvider.getInMemoryStore().clear()
     testedProjection.storeEvents(evt)
     testedProjection
   }
