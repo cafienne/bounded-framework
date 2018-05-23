@@ -13,13 +13,14 @@ import io.cafienne.bounded.akka.persistence.eventmaterializers.{EventMaterialize
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 
-class CassandraOffsetStore(readJournal: CassandraReadJournal, createTableTimeout: Duration) extends OffsetStore {
+class CassandraOffsetStore(readJournal: CassandraReadJournal, createTableTimeout: Duration, keyspace: String = "akka")
+    extends OffsetStore {
 
   import EventMaterializerExecutionContext._
 
   Await.result(
     readJournal.session.executeWrite(
-      "CREATE TABLE IF NOT EXISTS akka.vw_offsetstore (view_identifier text PRIMARY KEY, offset_type text, offset_value text);"
+      s"CREATE TABLE IF NOT EXISTS $keyspace.vw_offsetstore (view_identifier text PRIMARY KEY, offset_type text, offset_value text);"
     ),
     createTableTimeout
   )
@@ -37,7 +38,9 @@ class CassandraOffsetStore(readJournal: CassandraReadJournal, createTableTimeout
 
   override def getOffset(viewIdentifier: String): Future[Offset] = {
     readJournal.session
-      .selectOne(s"SELECT offset_value, offset_type FROM akka.vw_offsetstore WHERE view_identifier=\'$viewIdentifier\'")
+      .selectOne(
+        s"SELECT offset_value, offset_type FROM $keyspace.vw_offsetstore WHERE view_identifier=\'$viewIdentifier\'"
+      )
       .map(r => r.fold(Offset.noOffset)(r => string2offset(r.getString("offset_value"), r.getString("offset_type"))))
   }
 

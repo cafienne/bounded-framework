@@ -46,7 +46,7 @@ object Boot extends App with Configured {
   val cargoLmdbClient = new CargoLmdbClient(new File(lmdbPath, "cargo"))
 
   val cargoQueries              = new CargoQueriesImpl(cargoLmdbClient)
-  val cargoViewProjectionWriter = new CargoViewProjectionWriter(system, cargoLmdbClient) with OffsetStoreProvider
+  val cargoViewProjectionWriter = new CargoViewProjectionWriter(system, cargoLmdbClient) with ReadJournalOffsetStore
 
   val eventMaterializers = new EventMaterializers(
     List(

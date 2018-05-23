@@ -60,12 +60,14 @@ object OffsetStoreProvider {
   }
 
   def getLmdbStore(offsetStoreConfig: Config): OffsetStore = {
-    store.getOrElse(LmdbStoreName, {
-      val lmdbConfig      = new LmdbConfig(offsetStoreConfig)
-      val lmdbOffsetStore = LmdbOffsetStore(lmdbConfig)
-      store.put(LmdbStoreName, lmdbOffsetStore)
-      lmdbOffsetStore
-    })
+    store.getOrElse(
+      LmdbStoreName, {
+        val lmdbConfig      = new LmdbConfig(offsetStoreConfig)
+        val lmdbOffsetStore = LmdbOffsetStore(lmdbConfig)
+        store.put(LmdbStoreName, lmdbOffsetStore)
+        lmdbOffsetStore
+      }
+    )
   }
 
 }
