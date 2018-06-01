@@ -19,7 +19,6 @@ object Dependencies {
       akkaModule("testkit") % Test,
       "com.scalapenos"              %% "stamina-json"                           % staminaVersion,
       "io.spray"                    %% "spray-json"                             % "1.3.4",
-      "com.typesafe.akka"           %% "akka-persistence-cassandra"             % "0.83",
       "com.github.dnvriend"         %% "akka-persistence-inmemory"              % persistenceInMemVersion,
       "com.typesafe.scala-logging"  %% "scala-logging"                          % "3.5.0"
     )
@@ -27,7 +26,7 @@ object Dependencies {
 
   val log = Seq(
       "ch.qos.logback" % "logback-classic" % "1.2.3",
-      "net.logstash.logback" % "logstash-logback-encoder" % "4.10"
+      "net.logstash.logback" % "logstash-logback-encoder"               % "4.10"
     )
 
 
