@@ -101,11 +101,14 @@ object LmdbOffsetStore {
       if (!lmdbConfig.path.exists()) {
         val parentFolder = new File(lmdbConfig.path.getParent)
         if (!parentFolder.exists()) {
-           if (parentFolder.mkdirs()) {
-             logger.debug("Created {} in order to store LMDB offsets", parentFolder.getAbsolutePath)
-           } else {
-             logger.debug("Could not create {} in order to store LMDB offsets, please create this folder by hand and restart", parentFolder.getAbsolutePath)
-           }
+          if (parentFolder.mkdirs()) {
+            logger.debug("Created {} in order to store LMDB offsets", parentFolder.getAbsolutePath)
+          } else {
+            logger.debug(
+              "Could not create {} in order to store LMDB offsets, please create this folder by hand and restart",
+              parentFolder.getAbsolutePath
+            )
+          }
         }
       }
       store = Some(new LmdbOffsetStore(lmdbConfig))
