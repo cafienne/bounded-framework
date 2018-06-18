@@ -34,11 +34,11 @@ class CargoRouteSpec extends FlatSpec with MustMatchers with ScalatestRouteTest 
   val metadata = MetaData(ZonedDateTime.now, None)
 
   val cargoQueries = new CargoQueries {
-    override def getCargo(cargoId: CargoDomainProtocol.CargoId): Future[Option[CargoViewItem]] = {
+    override def getCargo(cargoId: CargoDomainProtocol.CargoId): Option[CargoViewItem] = {
       if (cargoId.id.compareTo(cargoId1.id) == 0) {
-        Future.successful(Some(cargoViewItem1))
+        Some(cargoViewItem1)
       } else {
-        Future.successful(None)
+        None
       }
     }
   }

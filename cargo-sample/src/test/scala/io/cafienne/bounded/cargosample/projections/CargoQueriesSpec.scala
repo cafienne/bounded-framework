@@ -11,10 +11,10 @@ import java.util.UUID
 import akka.actor.ActorSystem
 import akka.event.{Logging, LoggingAdapter}
 import akka.persistence.query.Sequence
-import akka.testkit.{TestKit, _}
+import akka.testkit.TestKit
 import akka.util.Timeout
 import io.cafienne.bounded.aggregate.{MetaData, UserContext, UserId}
-import io.cafienne.bounded.akka.persistence.eventmaterializers.{OffsetStoreProvider, ReadJournalOffsetStore}
+import io.cafienne.bounded.akka.persistence.eventmaterializers.OffsetStoreProvider
 import io.cafienne.bounded.cargosample.SpecConfig
 import io.cafienne.bounded.cargosample.domain.CargoDomainProtocol._
 import io.cafienne.bounded.cargosample.projections.QueriesJsonProtocol.CargoViewItem
@@ -29,7 +29,7 @@ class CargoQueriesSpec extends WordSpec with Matchers with ScalaFutures with Bef
 
   //Setup required supporting classes
   implicit val timeout                = Timeout(10.seconds)
-  implicit val system                 = ActorSystem("CargoTestSystem", SpecConfig.testConfigDVriendInMem)
+  implicit val system                 = ActorSystem("CargoTestSystem", SpecConfig.testConfigAkkaInMem)
   implicit val logger: LoggingAdapter = Logging(system, getClass)
   implicit val defaultPatience        = PatienceConfig(timeout = Span(4, Seconds), interval = Span(100, Millis))
 
@@ -69,9 +69,7 @@ class CargoQueriesSpec extends WordSpec with Matchers with ScalaFutures with Bef
         assert(replayResult.offset == Some(Sequence(1L)))
       }
 
-      whenReady(cargoQueries.getCargo(cargoId1)) { cargo =>
-        cargo should be(Some(CargoViewItem(cargoId1, "Amsterdam", "New York", expectedDeliveryTime)))
-      }
+      cargoQueries.getCargo(cargoId1) should be(Some(CargoViewItem(cargoId1, "Amsterdam", "New York", expectedDeliveryTime)))
     }
     "add and retrieve an update on valid cargo based on new event after replay" in {
       val evt1    = CargoPlanned(metaData, cargoId1, trackingId, routeSpecification)
@@ -84,10 +82,7 @@ class CargoQueriesSpec extends WordSpec with Matchers with ScalaFutures with Bef
 
       val evt2 = NewRouteSpecified(metaData, cargoId1, routeSpecification.copy(destination = Location("Oslo")))
       fixture.addEvent(evt2)
-      whenReady(cargoQueries.getCargo(cargoId1)) { cargo =>
-        cargo should be(Some(CargoViewItem(cargoId1, "Amsterdam", "Oslo", expectedDeliveryTime)))
-      }
-
+      cargoQueries.getCargo(cargoId1) should be(Some(CargoViewItem(cargoId1, "Amsterdam", "Oslo", expectedDeliveryTime)))
     }
   }
 
