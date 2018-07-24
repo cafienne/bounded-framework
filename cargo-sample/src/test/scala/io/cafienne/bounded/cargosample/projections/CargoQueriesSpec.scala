@@ -30,7 +30,7 @@ class CargoQueriesSpec extends WordSpec with Matchers with ScalaFutures with Bef
 
   //Setup required supporting classes
   implicit val timeout                = Timeout(10.seconds)
-  implicit val system                 = ActorSystem("CargoTestSystem", SpecConfig.testConfigAkkaInMem)
+  implicit val system                 = ActorSystem("CargoTestSystem", SpecConfig.testConfigDVriendInMem)
   implicit val logger: LoggingAdapter = Logging(system, getClass)
   implicit val defaultPatience        = PatienceConfig(timeout = Span(4, Seconds), interval = Span(100, Millis))
   implicit val buildInfo =
@@ -73,7 +73,9 @@ class CargoQueriesSpec extends WordSpec with Matchers with ScalaFutures with Bef
         assert(replayResult.offset == Some(Sequence(1L)))
       }
 
-      cargoQueries.getCargo(cargoId1) should be(Some(CargoViewItem(cargoId1, "Amsterdam", "New York", expectedDeliveryTime)))
+      cargoQueries.getCargo(cargoId1) should be(
+        Some(CargoViewItem(cargoId1, "Amsterdam", "New York", expectedDeliveryTime))
+      )
     }
     "add and retrieve an update on valid cargo based on new event after replay" in {
       val evt1    = CargoPlanned(MetaData.fromCommand(metaData), cargoId1, trackingId, routeSpecification)
@@ -90,7 +92,9 @@ class CargoQueriesSpec extends WordSpec with Matchers with ScalaFutures with Bef
         routeSpecification.copy(destination = Location("Oslo"))
       )
       fixture.addEvent(evt2)
-      cargoQueries.getCargo(cargoId1) should be(Some(CargoViewItem(cargoId1, "Amsterdam", "Oslo", expectedDeliveryTime)))
+      cargoQueries.getCargo(cargoId1) should be(
+        Some(CargoViewItem(cargoId1, "Amsterdam", "Oslo", expectedDeliveryTime))
+      )
     }
   }
 
