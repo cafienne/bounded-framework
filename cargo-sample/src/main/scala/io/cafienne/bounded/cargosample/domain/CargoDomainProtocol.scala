@@ -7,6 +7,9 @@ package io.cafienne.bounded.cargosample.domain
 import io.cafienne.bounded.aggregate._
 import java.time.ZonedDateTime
 import java.util.UUID
+
+import io.cafienne.bounded.{UserContext, UserId}
+
 import scala.util.control.NoStackTrace
 
 object CargoDomainProtocol {
@@ -21,6 +24,8 @@ object CargoDomainProtocol {
     override def toString: String = id.toString
   }
 
+  case class CargoUserContext(userId: UserId, roles: List[String]) extends UserContext
+
   case class TrackingId(id: UUID)
   case class Location(name: String)
   case class RouteSpecification(origin: Location, destination: Location, arrivalDeadline: ZonedDateTime)
@@ -32,9 +37,9 @@ object CargoDomainProtocol {
     * @see DomainCommand for details.
     */
   trait CargoDomainCommand extends DomainCommand {
-    override def id: CargoId
+    override def aggregateRootId: CargoId
 
-    val metaData: MetaData
+    val metaData: CommandMetaData
   }
 
   /**
@@ -46,17 +51,17 @@ object CargoDomainProtocol {
 
   // Commands
   case class PlanCargo(
-    metaData: MetaData,
+    metaData: CommandMetaData,
     cargoId: CargoId,
     trackingId: TrackingId,
     routeSpecification: RouteSpecification
   ) extends CargoDomainCommand {
-    override def id: CargoId = cargoId
+    override def aggregateRootId: CargoId = cargoId
   }
 
-  case class SpecifyNewRoute(metaData: MetaData, cargoId: CargoId, routeSpecification: RouteSpecification)
+  case class SpecifyNewRoute(metaData: CommandMetaData, cargoId: CargoId, routeSpecification: RouteSpecification)
       extends CargoDomainCommand {
-    override def id: CargoId = cargoId
+    override def aggregateRootId: CargoId = cargoId
   }
 
   // Events

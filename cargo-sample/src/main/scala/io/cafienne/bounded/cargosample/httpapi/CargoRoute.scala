@@ -12,7 +12,7 @@ import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import akka.http.scaladsl.model.StatusCodes
 import akka.event.{Logging, LoggingAdapter}
 import akka.http.scaladsl.server.{PathMatchers, Route}
-import io.cafienne.bounded.aggregate.{CommandGateway, Ko, MetaData, Ok}
+import io.cafienne.bounded.aggregate._
 import io.cafienne.bounded.cargosample.domain.{CargoCommandValidatorsImpl, CargoDomainProtocol}
 import io.cafienne.bounded.cargosample.domain.CargoDomainProtocol.{CargoId, CargoPlanned, TrackingId}
 import io.cafienne.bounded.cargosample.projections.CargoQueries
@@ -92,7 +92,7 @@ class CargoRoute(commandGateway: CommandGateway, cargoQueries: CargoQueries)(imp
       new ApiImplicitParam(
         required = true,
         paramType = "body",
-        dataType = "io.cafienne.bounded.cargosample.httpapi.HttpJsonProtocol$PlanCargo"
+        dataType = "io.cafienne.bounded.cargosample.httpapi.HttpJsonProtocol$" + "PlanCargo" // concat to remove interpolator warning
       )
     )
   )
@@ -107,7 +107,7 @@ class CargoRoute(commandGateway: CommandGateway, cargoQueries: CargoQueries)(imp
     post {
       path("cargo") {
         entity(as[PlanCargo]) { planCargo =>
-          val metadata = MetaData(ZonedDateTime.now(), None)
+          val metadata = CommandMetaData(ZonedDateTime.now(), None)
           onComplete(
             commandGateway.sendAndAsk(
               CargoDomainProtocol.PlanCargo(
