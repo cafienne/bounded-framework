@@ -7,28 +7,31 @@ package io.cafienne.bounded.test
 import akka.actor.{ActorSystem, Props}
 import io.cafienne.bounded.{BuildInfo, RuntimeInfo}
 import io.cafienne.bounded.aggregate._
+import io.cafienne.bounded.test.DomainProtocol.StateUpdated
 import io.cafienne.bounded.test.TestAggregateRoot.TestAggregateRootState
+
 import scala.collection.immutable.Seq
 
-//object DomainProtocol {
-case class TestAggregateRootId(id: String) extends AggregateRootId {
-  override def idAsString: String = id
+object DomainProtocol {
+  case class TestAggregateRootId(id: String) extends AggregateRootId {
+    override def idAsString: String = id
+  }
+
+  case class CreateInitialState(metaData: CommandMetaData, aggregateRootId: AggregateRootId, state: String)
+      extends DomainCommand
+  case class InitialStateCreated(metaData: MetaData, id: AggregateRootId, state: String) extends DomainEvent
+
+  case class UpdateState(metaData: CommandMetaData, aggregateRootId: AggregateRootId, state: String)
+      extends DomainCommand
+  case class StateUpdated(metaData: MetaData, id: AggregateRootId, state: String) extends DomainEvent
+
+  case class InvalidCommand(msg: String) extends HandlingFailure
+  case class InvalidState(msg: String)   extends HandlingFailure
 }
-
-case class CreateInitialState(metaData: CommandMetaData, aggregateRootId: AggregateRootId, state: String)
-    extends DomainCommand
-case class InitialStateCreated(metaData: MetaData, id: AggregateRootId, state: String) extends DomainEvent
-
-case class UpdateState(metaData: CommandMetaData, aggregateRootId: AggregateRootId, state: String) extends DomainCommand
-case class StateUpdated(metaData: MetaData, id: AggregateRootId, state: String)                    extends DomainEvent
-
-case class InvalidCommand(msg: String) extends HandlingFailure
-case class InvalidState(msg: String)   extends HandlingFailure
-//}
 
 class TestAggregateRoot(aggregateRootId: AggregateRootId, buildInfo: BuildInfo, runtimeInfo: RuntimeInfo)
     extends AggregateRootActor[TestAggregateRootState] {
-  //import DomainProtocol._
+  import DomainProtocol._
 
   implicit val bi = buildInfo
   implicit val ri = runtimeInfo

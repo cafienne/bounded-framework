@@ -9,7 +9,6 @@ import java.util.concurrent.atomic.AtomicInteger
 import io.cafienne.bounded.test.TestableAggregateRoot.{CommandHandlingException, IllegalCommandException}
 
 import scala.reflect.ClassTag
-//import scala.reflect.runtime.universe
 import akka.actor._
 import akka.pattern.ask
 import akka.testkit.TestProbe

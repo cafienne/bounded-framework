@@ -11,9 +11,9 @@ import akka.event.{Logging, LoggingAdapter}
 import akka.testkit.TestKit
 import akka.util.Timeout
 import io.cafienne.bounded.{BuildInfo, RuntimeInfo}
-import io.cafienne.bounded.aggregate.{AggregateRootId, CommandMetaData, MetaData}
+import io.cafienne.bounded.aggregate.{CommandMetaData, MetaData}
 import io.cafienne.bounded.test.TestableAggregateRoot.{CommandHandlingException, IllegalCommandException}
-//import io.cafienne.bounded.test.DomainProtocol.InitialStateCreated
+import io.cafienne.bounded.test.DomainProtocol._
 import io.cafienne.bounded.test.TestAggregateRoot.TestAggregateRootState
 import org.scalatest.{AsyncWordSpec, BeforeAndAfterAll, Matchers}
 import org.scalatest.concurrent.ScalaFutures
@@ -37,8 +37,6 @@ class TestableAggregateRootSpec extends AsyncWordSpec with Matchers with ScalaFu
 
     "create without state in given" in {
       val testAggregateRootId1 = TestAggregateRootId("1")
-
-      val targetState = TestAggregateRootState("new")
 
       val ar = TestableAggregateRoot
         .given[TestAggregateRoot, TestAggregateRootState](testAggregateRootCreator, testAggregateRootId1)
@@ -93,7 +91,7 @@ class TestableAggregateRootSpec extends AsyncWordSpec with Matchers with ScalaFu
       val updateStateCommand   = UpdateState(commandMetaData, testAggregateRootId1, "updated")
 
       an[CommandHandlingException] should be thrownBy {
-        val ar = TestableAggregateRoot
+        TestableAggregateRoot
           .given[TestAggregateRoot, TestAggregateRootState](
             testAggregateRootCreator,
             testAggregateRootId1,
@@ -110,7 +108,7 @@ class TestableAggregateRootSpec extends AsyncWordSpec with Matchers with ScalaFu
       val updateStateCommand                 = UpdateState(commandMetaData, testAggregateRootIdWrongForCommand, "updated")
 
       an[IllegalCommandException] should be thrownBy {
-        val ar = TestableAggregateRoot
+        TestableAggregateRoot
           .given[TestAggregateRoot, TestAggregateRootState](
             testAggregateRootCreator,
             testAggregateRootId1,
