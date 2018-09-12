@@ -12,7 +12,7 @@ import io.cafienne.bounded.RuntimeInfo
 import scala.io.Source
 
 /**
-  * <p>A RuntimeInfoLoader ensures that for a single deployment (instance) the same runtime id is used even after a restart.
+  * <p>A PerLocalInstanceRuntimeInfoLoader ensures that for a single deployment (instance) the same runtime id is used even after a restart.
   * This allows event materializers to use a {@link io.cafienne.bounded.eventmaterializers.MaterializerEventFilter} to
   * filter on event that where created on a specific instance.</p>
   *
@@ -22,7 +22,7 @@ import scala.io.Source
   *   implicit val runtimeInfo = RuntimeInfoLoader(new File(filename))
   * </pre></blockquote></p>
  */
-object RuntimeInfoLoader {
+object PerLocalInstanceRuntimeInfoLoader {
 
   private def newId = UUID.randomUUID().toString.replaceAll("-", "")
 
