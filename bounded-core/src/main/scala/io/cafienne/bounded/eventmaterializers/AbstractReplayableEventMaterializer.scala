@@ -8,7 +8,6 @@ import akka.{Done, NotUsed}
 import akka.actor.ActorSystem
 import akka.persistence.query.{EventEnvelope, Offset}
 import akka.stream.scaladsl.Source
-import io.cafienne.bounded.aggregate.DomainEvent
 
 import scala.concurrent.Future
 
@@ -50,7 +49,7 @@ abstract class AbstractReplayableEventMaterializer(
     val source: Source[EventEnvelope, NotUsed] =
       journal
         .currentEventsByTag(tagName, targetOffset)
-        .filter(eventEnvelope => materializerEventFilter.filter(eventEnvelope.event.asInstanceOf[DomainEvent]))
+        .filter(eventEnvelope => materializerEventFilter.filter(eventEnvelope.event))
     source
       .runFoldAsync(targetOffset) {
         case (previousOffset, EventEnvelope(offset, persistenceId, sequenceNo, evt)) =>
