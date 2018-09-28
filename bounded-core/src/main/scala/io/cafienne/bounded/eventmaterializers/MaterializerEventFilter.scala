@@ -17,7 +17,7 @@ trait MaterializerEventFilter {
     * @param evt DomainEvent that is to be evaluated
     * @return true when the event needs to be processed, false when it needs to be skipped
     */
-  def filter(evt: DomainEvent): Boolean
+  def filter(evt: Any): Boolean
 
 }
 
@@ -43,12 +43,14 @@ class RuntimeMaterializerEventFilter(
   compatible: Compatibility = DefaultCompatibility
 ) extends MaterializerEventFilter {
 
-  override def filter(evt: DomainEvent): Boolean = {
-    compatible match {
-      case Compatibility(RuntimeCompatibility.ALL) => true
-      case Compatibility(RuntimeCompatibility.CURRENT) =>
-        evt.metaData.runTimeInfo.id.equals(runtimeInfo.id)
-    }
+  override def filter(evt: Any): Boolean = evt match {
+    case e: DomainEvent =>
+      compatible match {
+        case Compatibility(RuntimeCompatibility.ALL) => true
+        case Compatibility(RuntimeCompatibility.CURRENT) =>
+          e.metaData.runTimeInfo.id.equals(runtimeInfo.id)
+      }
+    case _ => true // Unknown events are passed
   }
 }
 
@@ -56,5 +58,5 @@ class RuntimeMaterializerEventFilter(
   * A Default Filter that will accept all events to be processed. This is used as default behaviour of the Event Materializers.
   */
 object NoFilterEventFilter extends MaterializerEventFilter {
-  override def filter(evt: DomainEvent): Boolean = true
+  override def filter(evt: Any): Boolean = true
 }

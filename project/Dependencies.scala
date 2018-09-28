@@ -2,7 +2,7 @@ import sbt._
 
 object Dependencies {
 
-  val akkaVersion = "2.5.11"
+  val akkaVersion = "2.5.13"
   val staminaVersion = "0.1.4"
   val persistenceInMemVersion = "2.5.1.1"
 
@@ -19,7 +19,7 @@ object Dependencies {
       akkaModule("testkit") % Test,
       "com.scalapenos"              %% "stamina-json"                           % staminaVersion,
       "io.spray"                    %% "spray-json"                             % "1.3.4",
-      "com.typesafe.akka"           %% "akka-persistence-cassandra"             % "0.83",
+      "com.typesafe.akka"           %% "akka-persistence-cassandra"             % "0.90",
       "com.github.dnvriend"         %% "akka-persistence-inmemory"              % persistenceInMemVersion,
       "com.typesafe.scala-logging"  %% "scala-logging"                          % "3.5.0"
     )

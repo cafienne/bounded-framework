@@ -15,8 +15,6 @@ import io.cafienne.bounded.akka.ActorSystemProvider
 import io.cafienne.bounded.akka.persistence.ReadJournalProvider
 import io.cafienne.bounded.config.Configured
 import com.typesafe.scalalogging.Logger
-import io.cafienne.bounded.aggregate.DomainEvent
-import io.cafienne.bounded._
 import io.cafienne.bounded.eventmaterializers.offsetstores.OffsetStore
 
 import scala.concurrent.{Await, Future}
@@ -83,9 +81,9 @@ abstract class AbstractEventMaterializer(
   /**
     * Publish an event on the AKKA eventbus after the event is processed.
     */
-  val isPublishRequired: Boolean = (actorSystem.settings.config
+  val isPublishRequired: Boolean = actorSystem.settings.config
     .hasPath("bounded.eventmaterializers.publish") && actorSystem.settings.config
-    .getBoolean("bounded.eventmaterializers.publish"))
+    .getBoolean("bounded.eventmaterializers.publish")
 
   /**
     * Register listener for events. Should be registered *after* replay is finished
@@ -103,7 +101,7 @@ abstract class AbstractEventMaterializer(
     val source: Source[EventEnvelope, NotUsed] =
       journal
         .eventsByTag(tagName, listenStartOffset)
-        .filter(eventEnvelope => materialzerEventFilter.filter(eventEnvelope.event.asInstanceOf[DomainEvent]))
+        .filter(eventEnvelope => materialzerEventFilter.filter(eventEnvelope.event))
     val lastSnk = Sink.last[Offset]
     val answer = source
       .mapAsync(1) {
