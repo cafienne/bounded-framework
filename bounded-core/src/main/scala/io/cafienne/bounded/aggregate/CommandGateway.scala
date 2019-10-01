@@ -6,7 +6,6 @@ package io.cafienne.bounded.aggregate
 
 import akka.actor.{ActorRef, ActorSystem}
 import akka.event.{Logging, LoggingAdapter}
-import akka.pattern.ask
 import akka.util.Timeout
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -20,6 +19,7 @@ class DefaultCommandGateway[A <: AggregateRootCreator](system: ActorSystem, aggr
   implicit timeout: Timeout,
   ec: ExecutionContext
 ) extends CommandGateway {
+  import akka.pattern.ask
 
   implicit val actorSystem   = system
   val logger: LoggingAdapter = Logging(system, getClass)

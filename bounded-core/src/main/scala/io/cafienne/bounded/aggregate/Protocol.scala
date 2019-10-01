@@ -12,7 +12,9 @@ import io.cafienne.bounded.{BuildInfo, Id, RuntimeInfo, UserContext}
 import scala.collection.immutable.Seq
 import stamina.Persistable
 
-trait AggregateRootId extends Id
+trait AggregateRootId {
+  def idAsString: String
+}
 
 /**
   * Metadata of the event contains data that is used within the framework and may be used by the application
