@@ -1,53 +1,46 @@
 /*
- * Copyright (C) 2016-2019 Cafienne B.V. <https://www.cafienne.io/bounded>
+ * Copyright (C) 2016-2020 Cafienne B.V. <https://www.cafienne.io/bounded>
  */
 
 package io.cafienne.bounded.aggregate.typed
 
-import akka.actor.{ActorSystem, Scheduler}
+import akka.actor.Scheduler
+import akka.cluster.sharding.typed.scaladsl.{ClusterSharding, EntityRef}
+import akka.persistence.typed.PersistenceId
 import akka.util.Timeout
-import io.cafienne.bounded.aggregate.{
-  AggregateRootCreator,
-  AggregateRootId,
-  CommandGateway,
-  CommandValidator,
-  DomainCommand,
-  ValidateableCommand
-}
+import io.cafienne.bounded.aggregate.{CommandValidator, DomainCommand, ValidateableCommand}
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 trait TypedCommandGateway[T <: DomainCommand] {
   def sendAndAsk(command: T)(implicit validator: ValidateableCommand[T]): Future[_]
-  def send(command: T)(implicit validator: ValidateableCommand[T]): Future[Unit]
+  def send(command: T)(implicit validator: ValidateableCommand[T]): Future[_]
 }
 
 class TypedDefaultCommandGateway[Cmd <: DomainCommand](
-  system: ActorSystem,
+  clusterSharding: ClusterSharding,
   aggregateRootCreator: TypedAggregateRootCreator[Cmd]
-)(implicit timeout: Timeout, scheduler: Scheduler)
+)(implicit timeout: Timeout, scheduler: Scheduler, ec: ExecutionContext)
     extends TypedCommandGateway[Cmd] {
-  import akka.actor.typed.ActorRef
-  import akka.actor.typed.scaladsl.adapter._
-  import akka.actor.typed.scaladsl.AskPattern._
 
-  implicit val actorSystem = system
-  implicit val ec          = actorSystem.dispatcher
+  //import akka.actor.typed.scaladsl.AskPattern._
 
   override def sendAndAsk(command: Cmd)(implicit validator: ValidateableCommand[Cmd]): Future[_] = {
-    CommandValidator
-      .validate(command)
-      .flatMap(validatedCommand => getAggregateRoot(validatedCommand.aggregateRootId).ask(ref => validatedCommand))
+//    CommandValidator
+//      .validate(command)
+//      .map(validatedCommand => getAggregateRoot(validatedCommand.aggregateRootId).?(validatedCommand))
+    Future.successful(None)
   }
 
-  override def send(command: Cmd)(implicit validator: ValidateableCommand[Cmd]): Future[Unit] = {
-    CommandValidator
-      .validate(command)
-      .map(validatedCommand => getAggregateRoot(validatedCommand.aggregateRootId).tell(validatedCommand))
+  override def send(command: Cmd)(implicit validator: ValidateableCommand[Cmd]): Future[_] = {
+//    CommandValidator
+//      .validate(command)
+//      .map(validatedCommand => getAggregateRoot(validatedCommand.aggregateRootId).tell(validatedCommand))
+    Future.successful(None)
   }
 
-  private def getAggregateRoot(t: AggregateRootId): ActorRef[Cmd] = {
-    system.spawn(aggregateRootCreator.behavior(t), t.idAsString)
+  private def getAggregateRoot(t: PersistenceId): EntityRef[_] = {
+    clusterSharding.entityRefFor(aggregateRootCreator.entityTypeKey, t.id)
   }
 
 }
