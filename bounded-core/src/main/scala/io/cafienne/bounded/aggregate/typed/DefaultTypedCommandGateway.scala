@@ -4,11 +4,10 @@
 
 package io.cafienne.bounded.aggregate.typed
 
-import akka.actor.typed.{ActorRef, ActorSystem, Behavior, Props, Scheduler, SpawnProtocol, Terminated}
+import akka.actor.typed.{ActorRef, ActorSystem, Behavior, PostStop, Scheduler, Terminated}
 import akka.actor.typed.scaladsl.Behaviors
 import akka.util.Timeout
-import io.cafienne.bounded.aggregate.{CommandValidator, DomainCommand, ReplyTo, ValidateableCommand}
-import akka.actor.typed.scaladsl.adapter._
+import io.cafienne.bounded.aggregate.{CommandValidator, DomainCommand, ValidateableCommand}
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -24,26 +23,65 @@ class DefaultTypedCommandGateway[Cmd <: DomainCommand](
     extends TypedCommandGateway[Cmd] {
 
   import akka.actor.typed.scaladsl.AskPattern._
-  import akka.actor.typed.scaladsl.adapter._
 
-  object RootBehavior {
-    def apply(): Behavior[SpawnProtocol.Command] =
+  object CommandGatewayGuardian {
+
+    sealed trait AggregateControl
+    final case class SpawnAggregate(aggregateId: String, replyTo: ActorRef[ActorRef[Cmd]]) extends AggregateControl
+    final case class StopAggregate(aggregateId: String)                                    extends AggregateControl
+    private case class AggregateTerminated(aggregateId: String)                            extends AggregateControl
+    final case object GracefulShutdown                                                     extends AggregateControl
+
+    val aggregates = collection.mutable.Map[String, ActorRef[Cmd]]()
+
+    def apply(): Behavior[AggregateControl] =
       Behaviors
-        .setup[SpawnProtocol.Command] { context =>
-          SpawnProtocol()
+        .setup[AggregateControl] { context =>
+          behaviors
         }
+
+    val behaviors: Behavior[CommandGatewayGuardian.AggregateControl] = Behaviors
+      .receive[AggregateControl] { (context, message) =>
+        message match {
+          case SpawnAggregate(aggregateId, replyTo) =>
+            context.log.info("Spawning Aggregate {}!", aggregateId)
+            val ref = aggregates.getOrElseUpdate(
+              aggregateId, {
+                val ref = context.spawn(aggregateRootCreator.behavior(aggregateId), name = aggregateId)
+                context.watchWith(ref, AggregateTerminated(aggregateId))
+                ref
+              }
+            )
+            replyTo ! ref
+            Behaviors.same
+          case GracefulShutdown =>
+            context.log.info("Initiating graceful shutdown...")
+//            aggregates.foreach((aggregateId: String, aggregateRef: ActorRef[Cmd]) => {
+//              //Need to know the stop message in the specific actor implmentation.
+//            })
+            Behaviors.stopped { () =>
+              //cleanup(context.system.log)
+              context.log.debug("Stopped base on message {}", message)
+            }
+          case AggregateTerminated(aggregateId) =>
+            context.log.debug("Aggregate {} terminated", aggregateId)
+            aggregates.-=(aggregateId)
+            Behaviors.same
+        }
+      }
+      .receiveSignal {
+        case (context, PostStop) =>
+          context.log.info("Typed Command Gateway Guardian stopped")
+          Behaviors.same
+        case (context, Terminated(ref)) =>
+          context.log.debug("Terminated actor with ref {}", ref)
+          Behaviors.same
+      }
   }
 
-  val gateway    = system.systemActorOf(RootBehavior(), "typedcommandgateway")
-  val aggregates = collection.mutable.Map[String, ActorRef[Cmd]]()
+  val gateway = system.systemActorOf(CommandGatewayGuardian(), "typedcommandgateway")
 
   override def sendAndAsk(command: Cmd)(implicit validator: ValidateableCommand[Cmd]): Future[_] = {
-
-//    CommandValidator
-//      .validate(command)
-//      .map(
-//        validatedCommand => getAggregateRoot(validatedCommand.aggregateRootId).ask(ref => command)
-//      )
     Future.failed(new RuntimeException("Please use send with a ReplyBehavior in your protocol"))
   }
 
@@ -52,23 +90,11 @@ class DefaultTypedCommandGateway[Cmd <: DomainCommand](
     CommandValidator
       .validate(command)
       .flatMap { validatedCommand =>
-        aggregates
-          .get(command.aggregateRootId)
-          .fold(spawnAggregateRoot(validatedCommand.aggregateRootId).map { ar =>
-            aggregates.update(command.aggregateRootId, ar)
-            ar.tell(validatedCommand)
-          })(found => Future { found.tell(command) })
+        spawnAggregateRoot(validatedCommand.aggregateRootId).map(ar => ar.tell(validatedCommand))
       }
   }
 
   private def spawnAggregateRoot(aggregateRootId: String): Future[ActorRef[Cmd]] = {
-    gateway.ask(
-      SpawnProtocol.Spawn(
-        behavior = aggregateRootCreator.behavior(aggregateRootId),
-        name = aggregateRootId,
-        props = Props.empty,
-        _
-      )
-    )
+    gateway.ask(CommandGatewayGuardian.SpawnAggregate(aggregateRootId, _))
   }
 }
