@@ -6,7 +6,6 @@ package io.cafienne.bounded.aggregate
 
 import akka.actor.{ActorRef, ActorSystem}
 import akka.event.{Logging, LoggingAdapter}
-import akka.persistence.typed.PersistenceId
 import akka.util.Timeout
 
 import scala.concurrent.{ExecutionContext, Future}

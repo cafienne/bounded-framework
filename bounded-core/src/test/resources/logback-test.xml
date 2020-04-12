@@ -7,8 +7,7 @@
       </encoder>
     </appender>
 
-    <logger name="akka" level="ERROR" />
-    <logger name="org.elasticsearch" level="ERROR" />
+    <logger name="akka" level="DEBUG" />
     <root level="DEBUG">
         <appender-ref ref="STDOUT"/>
     </root>

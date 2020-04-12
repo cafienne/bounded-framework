@@ -7,6 +7,7 @@ package io.cafienne.bounded.aggregate
 import java.time.ZonedDateTime
 import java.util.UUID
 
+import akka.actor.typed.ActorRef
 import akka.persistence.typed.PersistenceId
 import io.cafienne.bounded.{BuildInfo, Id, RuntimeInfo, UserContext}
 
@@ -29,6 +30,10 @@ trait DomainCommand {
   def aggregateRootId: String
 
   def metaData: CommandMetaData
+}
+
+trait ReplyTo {
+  var replyTo: ActorRef[_]
 }
 
 /**
