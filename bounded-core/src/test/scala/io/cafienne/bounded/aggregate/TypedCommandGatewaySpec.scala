@@ -6,20 +6,14 @@ package io.cafienne.bounded.aggregate
 
 import java.time.ZonedDateTime
 
-import akka.actor.ActorSystem
 import akka.actor.testkit.typed.scaladsl.ScalaTestWithActorTestKit
-import akka.actor.typed.Scheduler
-import akka.event.{Logging, LoggingAdapter}
 import akka.util.Timeout
 import io.cafienne.bounded.{BuildInfo, RuntimeInfo}
 import io.cafienne.bounded.aggregate.typed.DefaultTypedCommandGateway
-import io.cafienne.bounded.eventmaterializers.SpecConfig
+import org.scalatest.BeforeAndAfterAll
 import org.scalatest.flatspec.AsyncFlatSpecLike
-import org.scalatest.time.{Millis, Seconds, Span}
-
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
-import scala.util.Success
 
 class TypedCommandGatewaySpec extends ScalaTestWithActorTestKit(s"""
     akka.persistence.publish-plugin-commands = on
@@ -34,7 +28,7 @@ class TypedCommandGatewaySpec extends ScalaTestWithActorTestKit(s"""
     akka.coordinated-shutdown.run-by-actor-system-terminate = off
     akka.coordinated-shutdown.run-by-jvm-shutdown-hook = off
     akka.cluster.run-coordinated-shutdown-when-down = off
-    """) with AsyncFlatSpecLike {
+    """) with AsyncFlatSpecLike with BeforeAndAfterAll {
   //NOTE: Be aware that the config of the TestKit contains the name of the Cluster based on the name of this Spec (TypedClusteredSpec).
   //      When you copy this for your own use, change the name of the cluser.seed-nodes.
 
@@ -120,5 +114,8 @@ class TypedCommandGatewaySpec extends ScalaTestWithActorTestKit(s"""
 //      assert(result.isInstanceOf[OK.type])
 //    }
 //  }
+  protected override def afterAll(): Unit = {
+    Await.ready(typedCommandGateway.shutdown(), 5.seconds)
+  }
 
 }

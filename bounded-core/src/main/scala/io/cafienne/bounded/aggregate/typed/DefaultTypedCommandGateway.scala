@@ -6,6 +6,7 @@ package io.cafienne.bounded.aggregate.typed
 
 import akka.actor.typed.{ActorRef, ActorSystem, Behavior, PostStop, Scheduler, Terminated}
 import akka.actor.typed.scaladsl.Behaviors
+import akka.cluster.sharding.ShardRegion.GracefulShutdown
 import akka.util.Timeout
 import io.cafienne.bounded.aggregate.{CommandValidator, DomainCommand, ValidateableCommand}
 
@@ -14,6 +15,7 @@ import scala.concurrent.{ExecutionContext, Future}
 trait TypedCommandGateway[T <: DomainCommand] {
   def sendAndAsk(command: T)(implicit validator: ValidateableCommand[T]): Future[_]
   def send(command: T)(implicit validator: ValidateableCommand[T]): Future[_]
+  def shutdown(): Future[Unit]
 }
 
 class DefaultTypedCommandGateway[Cmd <: DomainCommand](
@@ -57,7 +59,7 @@ class DefaultTypedCommandGateway[Cmd <: DomainCommand](
           case GracefulShutdown =>
             context.log.info("Initiating graceful shutdown...")
 //            aggregates.foreach((aggregateId: String, aggregateRef: ActorRef[Cmd]) => {
-//              //Need to know the stop message in the specific actor implmentation.
+//              //Need to know the stop message in the specific actor implementation.
 //            })
             Behaviors.stopped { () =>
               //cleanup(context.system.log)
@@ -97,4 +99,10 @@ class DefaultTypedCommandGateway[Cmd <: DomainCommand](
   private def spawnAggregateRoot(aggregateRootId: String): Future[ActorRef[Cmd]] = {
     gateway.ask(CommandGatewayGuardian.SpawnAggregate(aggregateRootId, _))
   }
+
+  def shutdown(): Future[Unit] = {
+    gateway ! CommandGatewayGuardian.GracefulShutdown
+    Future.successful()
+  }
+
 }
