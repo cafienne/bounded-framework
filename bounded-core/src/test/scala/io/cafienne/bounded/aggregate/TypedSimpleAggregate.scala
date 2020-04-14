@@ -4,7 +4,6 @@
 
 package io.cafienne.bounded.aggregate
 
-import akka.actor.Props
 import akka.actor.typed.{ActorRef, Behavior}
 import akka.cluster.sharding.typed.scaladsl.EntityTypeKey
 import akka.persistence.typed.PersistenceId
@@ -14,9 +13,8 @@ import io.cafienne.bounded.{BuildInfo, RuntimeInfo, UserContext}
 import io.cafienne.bounded.aggregate.typed.TypedAggregateRootCreator
 import java.time.ZonedDateTime
 import java.util.UUID
-
-import akka.actor.testkit.typed.scaladsl.Effects
-import akka.actor.typed.scaladsl.Behaviors
+import scala.concurrent.duration._
+import akka.actor.typed.scaladsl.{Behaviors, TimerScheduler}
 import akka.persistence.RecoveryCompleted
 
 object TypedSimpleAggregate {
@@ -53,6 +51,16 @@ object TypedSimpleAggregate {
   final case class Stop(aggregateRootId: String, metaData: CommandMetaData, replyTo: ActorRef[Response])
       extends SimpleAggregateCommand
 
+  private final case class InternalStop(aggregateRootId: String, metaData: CommandMetaData)
+      extends SimpleAggregateCommand
+
+  final case class StopAfter(
+    aggregateRootId: String,
+    metaData: CommandMetaData,
+    waitInSecs: Integer,
+    replyTo: ActorRef[Response]
+  ) extends SimpleAggregateCommand
+
   //NOTE that a GET on the aggregate is not according to the CQRS pattern and added here for testing.
   sealed trait SimpleDirectAggregateQuery extends SimpleAggregateCommand
 
@@ -60,23 +68,26 @@ object TypedSimpleAggregate {
       extends SimpleDirectAggregateQuery
 
   // Event Type
-  sealed trait SimpleAggregateEvent                                        extends DomainEvent
-  final case class Created(id: String, metaData: MetaData)                 extends SimpleAggregateEvent
-  final case class ItemAdded(id: String, metaData: MetaData, item: String) extends SimpleAggregateEvent
+  sealed trait SimpleAggregateEvent                                                  extends DomainEvent
+  final case class Created(id: String, metaData: MetaData)                           extends SimpleAggregateEvent
+  final case class ItemAdded(id: String, metaData: MetaData, item: String)           extends SimpleAggregateEvent
+  final case class StoppedAfter(id: String, metaData: MetaData, waitInSecs: Integer) extends SimpleAggregateEvent
 
   // State Type
   final case class SimpleAggregateState(items: List[String] = List.empty[String]) {
     def update(evt: SimpleAggregateEvent): SimpleAggregateState = {
       evt match {
-        case evt: Created   => this
-        case evt: ItemAdded => this.copy(items = items.::(evt.item))
+        case evt: Created      => this
+        case evt: ItemAdded    => this.copy(items = items.::(evt.item))
+        case evt: StoppedAfter => this
       }
     }
   }
 
   // Command handler logic
-  val commandHandler
-    : (SimpleAggregateState, SimpleAggregateCommand) => ReplyEffect[SimpleAggregateEvent, SimpleAggregateState] = {
+  def commandHandler(
+    timers: TimerScheduler[SimpleAggregateCommand]
+  ): (SimpleAggregateState, SimpleAggregateCommand) => ReplyEffect[SimpleAggregateEvent, SimpleAggregateState] = {
     (state, command) =>
       logger.debug("Received command: " + command)
       command match {
@@ -84,9 +95,18 @@ object TypedSimpleAggregate {
         case cmd: AddItem => addItem(cmd)
         case cmd: Stop =>
           logger.debug("Stopping Aggregate {}", cmd.aggregateRootId)
-          Effect.stop().thenNoReply()
-
+          //timers.cancelAll()
+          Effect.stop().thenReply(cmd.replyTo)(_ => OK)
         //case cmd: GetItems => getItems(cmd)
+        case cmd: StopAfter =>
+          timers.startSingleTimer(
+            InternalStop(aggregateRootId = cmd.aggregateRootId, metaData = cmd.metaData),
+            2.seconds
+          )
+          Effect.none.thenReply(cmd.replyTo)(_ => OK)
+        case cmd: InternalStop =>
+          logger.debug("InternalStop for aggregate {}", cmd.aggregateRootId)
+          Effect.stop().thenNoReply()
       }
   }
 
@@ -99,6 +119,13 @@ object TypedSimpleAggregate {
     logger.debug("AddItem " + cmd)
     Effect
       .persist(ItemAdded(cmd.aggregateRootId, TestMetaData.fromCommand(cmd.metaData), cmd.item))
+      .thenReply(cmd.replyTo)(_ ⇒ OK)
+  }
+
+  private def stopAfter(cmd: StopAfter): ReplyEffect[SimpleAggregateEvent, SimpleAggregateState] = {
+    logger.debug("StoppedAfter " + cmd)
+    Effect
+      .persist(StoppedAfter(cmd.aggregateRootId, TestMetaData.fromCommand(cmd.metaData), cmd.waitInSecs))
       .thenReply(cmd.replyTo)(_ ⇒ OK)
   }
 
@@ -122,19 +149,21 @@ class SimpleAggregateCreator() extends TypedAggregateRootCreator[SimpleAggregate
 
   override def behavior(id: String): Behavior[SimpleAggregateCommand] = {
     logger.debug("Create aggregate behavior for {}", id)
-    EventSourcedBehavior
-      .withEnforcedReplies(
-        PersistenceId(aggregateRootTag, id),
-        SimpleAggregateState(List.empty[String]),
-        commandHandler,
-        eventHandler
-      )
-      .receiveSignal {
-        case (state, b: RecoveryCompleted) => {
-          logger.debug("Received RecoveryCompleted for actor with state {}", state)
-          replayed = true
+    Behaviors.withTimers { timers ⇒
+      EventSourcedBehavior
+        .withEnforcedReplies(
+          PersistenceId(aggregateRootTag, id),
+          SimpleAggregateState(List.empty[String]),
+          commandHandler(timers),
+          eventHandler
+        )
+        .receiveSignal {
+          case (state, b: RecoveryCompleted) => {
+            logger.debug("Received RecoveryCompleted for actor with state {}", state)
+            replayed = true
+          }
         }
-      }
+    }
   }
 
   override def entityTypeKey: EntityTypeKey[SimpleAggregateCommand] =

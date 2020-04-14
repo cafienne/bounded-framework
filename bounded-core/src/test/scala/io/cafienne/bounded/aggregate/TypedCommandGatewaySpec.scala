@@ -34,8 +34,6 @@ class TypedCommandGatewaySpec extends ScalaTestWithActorTestKit(s"""
 
   import TypedSimpleAggregate._
 
-  // import akka.actor.typed.scaladsl.adapter._
-
   implicit val commandValidator = new ValidateableCommand[SimpleAggregateCommand] {
     override def validate(cmd: SimpleAggregateCommand): Future[SimpleAggregateCommand] =
       Future.successful(cmd)
@@ -47,73 +45,63 @@ class TypedCommandGatewaySpec extends ScalaTestWithActorTestKit(s"""
   behavior of "Typed Command Gateway"
 
   implicit val gatewayTimeout = Timeout(10.seconds)
+  implicit val buildInfo      = BuildInfo("spec", "1.0")
+  implicit val runtimeInfo    = RuntimeInfo("current")
 
-  implicit val buildInfo   = BuildInfo("spec", "1.0")
-  implicit val runtimeInfo = RuntimeInfo("current")
-
-  val commandMetaData = AggregateCommandMetaData(ZonedDateTime.now(), None)
-
-  val creator = new SimpleAggregateCreator()
-
+  val commandMetaData     = AggregateCommandMetaData(ZonedDateTime.now(), None)
+  val creator             = new SimpleAggregateCreator()
   val typedCommandGateway = new DefaultTypedCommandGateway[SimpleAggregateCommand](system, creator)
 
   "Command Gateway" should "send Create command" in {
     val commandMetaData = AggregateCommandMetaData(ZonedDateTime.now(), None)
-
-    val aggregateId = "test0"
-
-    val probe = testKit.createTestProbe[Response]()
-
+    val aggregateId     = "test0"
+    val probe           = testKit.createTestProbe[Response]()
     Await.result(typedCommandGateway.send(Create(aggregateId, commandMetaData, probe.ref)), 2.seconds) shouldEqual (())
-
     val probeAnswer = probe.expectMessage(OK)
     assert(probeAnswer.equals(OK))
   }
 
   "Command Gateway" should "handle second message via actor in the Map" in {
     val commandMetaData = AggregateCommandMetaData(ZonedDateTime.now(), None)
-
-    val aggregateId = "test0"
-
-    val probe = testKit.createTestProbe[Response]()
-
+    val aggregateId     = "test0"
+    val probe           = testKit.createTestProbe[Response]()
     Await.result(typedCommandGateway.send(AddItem(aggregateId, commandMetaData, "new item 1", probe.ref)), 2.seconds) shouldEqual (())
-
     val probeAnswer = probe.expectMessage(OK)
     assert(probeAnswer.equals(OK))
-
   }
 
   "Command Gateway" should "recover after stop message and add to the map" in {
     val commandMetaData = AggregateCommandMetaData(ZonedDateTime.now(), None)
-
-    val aggregateId = "test0"
-
-    val probe = testKit.createTestProbe[Response]()
-
+    val aggregateId     = "test0"
+    val probe           = testKit.createTestProbe[Response]()
     Await.result(typedCommandGateway.send(Stop(aggregateId, commandMetaData, probe.ref)), 2.seconds) shouldEqual (())
-
-    probe.expectNoMessage()
-
+    probe.expectMessage(OK)
+    Thread.sleep(3000)
     Await.result(typedCommandGateway.send(AddItem(aggregateId, commandMetaData, "new item 2", probe.ref)), 2.seconds) shouldEqual (())
-
     val probeAnswer = probe.expectMessage(OK)
     assert(probeAnswer.equals(OK))
-
   }
 
-  //  it should "send a command via sharding and wait for a Typed reply" in {
-//
-//    val aggregateId = "test1"
-//
-//    val probe     = testKit.createTestProbe[Response]()
-//    val entityRef = sharding.entityRefFor(creator.entityTypeKey, aggregateId)
-//    val answer    = entityRef.?(ref => Create(aggregateId, commandMetaData, ref))
-//
-//    answer.map { result =>
-//      assert(result.isInstanceOf[OK.type])
-//    }
-//  }
+  "Command Gateway" should "recover after the aggregate stopped itself" in {
+    //TODO this test is not finished. The recover after an internal aggregate stop is not implemented at this moment.
+    //1) find a way to stop an aggregate not directly responding on a command
+    //2) send a command that will cause the stopping to the aggregate
+    //3) See if stopping involves the AggregateTerminated message or the normal Terminated message
+    //CONCLUSION TILL NOW: AggregateTerminated is called when the actor stops internally
+    //4) Send a new command to the aggregate, at this moment when the normal Terminated was used the actor ref is dead
+    //   and there will be a dead letter.
+    val commandMetaData = AggregateCommandMetaData(ZonedDateTime.now(), None)
+    val aggregateId     = "test0"
+    val probe           = testKit.createTestProbe[Response]()
+    Await.result(typedCommandGateway.send(StopAfter(aggregateId, commandMetaData, 3, probe.ref)), 2.seconds) shouldEqual (())
+    val probeAnswer = probe.expectMessage(OK)
+    assert(probeAnswer.equals(OK))
+    Thread.sleep(3000)
+    Await.result(typedCommandGateway.send(AddItem(aggregateId, commandMetaData, "new item 3", probe.ref)), 2.seconds) shouldEqual (())
+    val probeAnswer2 = probe.expectMessage(OK)
+    assert(probeAnswer2.equals(OK))
+  }
+
   protected override def afterAll(): Unit = {
     Await.ready(typedCommandGateway.shutdown(), 5.seconds)
   }
