@@ -7,6 +7,7 @@ import sbt._
 object Dependencies {
 
   val akkaVersion = "2.6.4"
+  val akkaHttpVersion = "10.1.11"
   val staminaVersion = "0.1.5"
   val persistenceInMemVersion = "2.5.15.2"
   val scalaTestVersion = "3.1.1"
@@ -44,12 +45,12 @@ object Dependencies {
   val  test = log ++ Seq(
       "org.scalatest"       %% "scalatest"                   % scalaTestVersion % Test,
       "com.scalapenos"      %% "stamina-testkit"             % staminaVersion % Test,
-      "org.scalamock"       %% "scalamock-scalatest-support" % "3.6.0" % Test
+      //"org.scalamock"       %% "scalamock-scalatest-support" % "4.4.0" % Test
     )
 
 
   val akkaHttpDeps = {
-    def akkaHttpModule(name: String, version: String = "10.1.11") =
+    def akkaHttpModule(name: String, version: String = akkaHttpVersion) =
       "com.typesafe.akka" %% s"akka-$name" % version
 
     baseDeps ++ Seq(
@@ -66,8 +67,10 @@ object Dependencies {
 
   val testDeps = {
     baseDeps ++ Seq(
-      "org.scalatest"          %% "scalatest"                   % scalaTestVersion,
-      "com.typesafe.akka"      %% "akka-testkit"                % akkaVersion
+      "org.scalatest"          %% "scalatest"                 % scalaTestVersion,
+      "com.typesafe.akka"      %% "akka-testkit"              % akkaVersion,
+      "com.typesafe.akka"      %% "akka-actor-testkit-typed"  % akkaVersion,
+      "com.typesafe.akka"      %% "akka-http-testkit"         % akkaHttpVersion
     ) ++ test
   }
 

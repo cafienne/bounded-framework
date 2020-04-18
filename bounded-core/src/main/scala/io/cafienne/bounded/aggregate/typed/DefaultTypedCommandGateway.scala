@@ -6,18 +6,34 @@ package io.cafienne.bounded.aggregate.typed
 
 import akka.actor.typed.{ActorRef, ActorSystem, Behavior, PostStop, Scheduler, Terminated}
 import akka.actor.typed.scaladsl.Behaviors
-import akka.cluster.sharding.ShardRegion.GracefulShutdown
 import akka.util.Timeout
 import io.cafienne.bounded.aggregate.{CommandValidator, DomainCommand, ValidateableCommand}
 
 import scala.concurrent.{ExecutionContext, Future}
 
 trait TypedCommandGateway[T <: DomainCommand] {
-  def sendAndAsk(command: T)(implicit validator: ValidateableCommand[T]): Future[_]
-  def send(command: T)(implicit validator: ValidateableCommand[T]): Future[_]
+  def ask[Res](aggregateRootId: String, replyTo: ActorRef[Res] => T)(
+    implicit validator: ValidateableCommand[T]
+  ): Future[Res]
+  def tell(command: T)(implicit validator: ValidateableCommand[T]): Future[_]
   def shutdown(): Future[Unit]
 }
 
+/**
+  * DefaultTypedCommandGateway implements the TypedCommandGateway trait for a LOCAL system
+  * it will keep a list of aggregate root actors and use those to ask or tell commands to
+  * Typed aggregate roots.
+  *
+  * TODO: Aggregate Root Actors are responsible for their own lifecycle
+  * TODO At this moment, a started AR will not be stopped.
+  *
+  * @param system A typed actorsystem
+  * @param aggregateRootCreator The class that creates the specific type of aggregate root
+  * @param timeout timeout used for ask
+  * @param ec implicit ExecutionContext
+  * @param scheduler implicit scheduler for the ask
+  * @tparam Cmd The Actual behavior protocol of the Aggregate Root Actor
+  */
 class DefaultTypedCommandGateway[Cmd <: DomainCommand](
   system: ActorSystem[_],
   aggregateRootCreator: TypedAggregateRootCreator[Cmd]
@@ -58,11 +74,8 @@ class DefaultTypedCommandGateway[Cmd <: DomainCommand](
             Behaviors.same
           case GracefulShutdown =>
             context.log.info("Initiating graceful shutdown...")
-//            aggregates.foreach((aggregateId: String, aggregateRef: ActorRef[Cmd]) => {
-//              //Need to know the stop message in the specific actor implementation.
-//            })
+            //Stopping the guardian will stop the aggregate root actors.
             Behaviors.stopped { () =>
-              //cleanup(context.system.log)
               context.log.debug("Stopped base on message {}", message)
             }
           case AggregateTerminated(aggregateId) =>
@@ -83,11 +96,17 @@ class DefaultTypedCommandGateway[Cmd <: DomainCommand](
 
   val gateway = system.systemActorOf(CommandGatewayGuardian(), "typedcommandgateway")
 
-  override def sendAndAsk(command: Cmd)(implicit validator: ValidateableCommand[Cmd]): Future[_] = {
-    Future.failed(new RuntimeException("Please use send with a ReplyBehavior in your protocol"))
+  override def ask[Res](aggregateRootId: String, replyTo: ActorRef[Res] => Cmd)(
+    implicit validator: ValidateableCommand[Cmd]
+  ): Future[Res] = {
+    //TODO validation is only possible when the replyTo function is executed and that is in the ask.
+    //How to validate the command ?
+    spawnAggregateRoot(aggregateRootId).flatMap(ar => {
+      ar.ask[Res](replyTo)
+    })
   }
 
-  override def send(command: Cmd)(implicit validator: ValidateableCommand[Cmd]): Future[_] = {
+  override def tell(command: Cmd)(implicit validator: ValidateableCommand[Cmd]): Future[_] = {
     system.log.debug("Received send {}", command)
     CommandValidator
       .validate(command)

@@ -32,9 +32,7 @@ class TypedCommandGatewaySpec extends ScalaTestWithActorTestKit(s"""
     akka.coordinated-shutdown.run-by-actor-system-terminate = off
     akka.coordinated-shutdown.run-by-jvm-shutdown-hook = off
     akka.cluster.run-coordinated-shutdown-when-down = off
-    """) with AsyncFlatSpecLike with ScalaFutures with BeforeAndAfterAll with LogCapturing {
-  //NOTE: Be aware that the config of the TestKit contains the name of the Cluster based on the name of this Spec (TypedClusteredSpec).
-  //      When you copy this for your own use, change the name of the cluser.seed-nodes.
+    """) with AsyncFlatSpecLike with ScalaFutures with BeforeAndAfterAll { // with LogCapturing {
 
   import TypedSimpleAggregate._
 
@@ -61,7 +59,7 @@ class TypedCommandGatewaySpec extends ScalaTestWithActorTestKit(s"""
     val commandMetaData = AggregateCommandMetaData(ZonedDateTime.now(), None)
     val aggregateId     = "test0"
     val probe           = testKit.createTestProbe[Response]()
-    whenReady(typedCommandGateway.send(Create(aggregateId, commandMetaData, probe.ref))) { answer =>
+    whenReady(typedCommandGateway.tell(Create(aggregateId, commandMetaData, probe.ref))) { answer =>
       answer shouldEqual (())
       val probeAnswer = probe.expectMessage(OK)
       assert(probeAnswer.equals(OK))
@@ -69,11 +67,20 @@ class TypedCommandGatewaySpec extends ScalaTestWithActorTestKit(s"""
 
   }
 
+  "Command Gateway" should "work with send and ask" in {
+    val commandMetaData = AggregateCommandMetaData(ZonedDateTime.now(), None)
+    val aggregateId     = "testask"
+    whenReady(typedCommandGateway.ask(aggregateId, ref => Create(aggregateId, commandMetaData, ref))) {
+      answer: Response =>
+        answer shouldEqual (OK)
+    }
+  }
+
   "Command Gateway" should "handle second message via actor in the Map" in {
     val commandMetaData = AggregateCommandMetaData(ZonedDateTime.now(), None)
     val aggregateId     = "test0"
     val probe           = testKit.createTestProbe[Response]()
-    whenReady(typedCommandGateway.send(AddItem(aggregateId, commandMetaData, "new item 1", probe.ref))) { answer =>
+    whenReady(typedCommandGateway.tell(AddItem(aggregateId, commandMetaData, "new item 1", probe.ref))) { answer =>
       answer shouldEqual (())
       val probeAnswer = probe.expectMessage(OK)
       assert(probeAnswer.equals(OK))
@@ -84,12 +91,12 @@ class TypedCommandGatewaySpec extends ScalaTestWithActorTestKit(s"""
     val commandMetaData = AggregateCommandMetaData(ZonedDateTime.now(), None)
     val aggregateId     = "test0"
     val probe           = testKit.createTestProbe[Response]()
-    whenReady(typedCommandGateway.send(Stop(aggregateId, commandMetaData, probe.ref))) { answer =>
+    whenReady(typedCommandGateway.tell(Stop(aggregateId, commandMetaData, probe.ref))) { answer =>
       answer shouldEqual (())
       probe.expectMessage(OK)
     }
     Thread.sleep(3000)
-    whenReady(typedCommandGateway.send(AddItem(aggregateId, commandMetaData, "new item 2", probe.ref))) { answer =>
+    whenReady(typedCommandGateway.tell(AddItem(aggregateId, commandMetaData, "new item 2", probe.ref))) { answer =>
       answer shouldEqual (())
       val probeAnswer = probe.expectMessage(OK)
       assert(probeAnswer.equals(OK))
@@ -100,12 +107,12 @@ class TypedCommandGatewaySpec extends ScalaTestWithActorTestKit(s"""
     val commandMetaData = AggregateCommandMetaData(ZonedDateTime.now(), None)
     val aggregateId     = "test0"
     val probe           = testKit.createTestProbe[Response]()
-    whenReady(typedCommandGateway.send(StopAfter(aggregateId, commandMetaData, 3, probe.ref))) { answer =>
+    whenReady(typedCommandGateway.tell(StopAfter(aggregateId, commandMetaData, 3, probe.ref))) { answer =>
       answer shouldEqual (())
       val probeAnswer = probe.expectMessage(OK)
       assert(probeAnswer.equals(OK))
     }
-    whenReady(typedCommandGateway.send(AddItem(aggregateId, commandMetaData, "new item 3", probe.ref))) { answer =>
+    whenReady(typedCommandGateway.tell(AddItem(aggregateId, commandMetaData, "new item 3", probe.ref))) { answer =>
       answer shouldEqual (())
       val probeAnswer2 = probe.expectMessage(OK)
       assert(probeAnswer2.equals(OK))

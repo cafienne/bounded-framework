@@ -5,7 +5,6 @@
 package io.cafienne.bounded.test
 
 import java.util.UUID
-
 import akka.actor._
 import akka.persistence.inmemory.extension.{InMemoryJournalStorage, InMemorySnapshotStorage, StorageExtension}
 import akka.testkit.TestProbe
