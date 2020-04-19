@@ -71,8 +71,7 @@ class TypedCommandGatewaySpec extends ScalaTestWithActorTestKit(s"""
     val commandMetaData = AggregateCommandMetaData(ZonedDateTime.now(), None)
     val aggregateId     = "testask"
     whenReady(typedCommandGateway.ask(aggregateId, ref => Create(aggregateId, commandMetaData, ref))) {
-      answer: Response =>
-        answer shouldEqual (OK)
+      answer: Response => answer shouldEqual (OK)
     }
   }
 

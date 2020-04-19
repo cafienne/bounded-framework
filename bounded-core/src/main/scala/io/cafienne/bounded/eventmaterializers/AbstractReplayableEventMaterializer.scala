@@ -35,9 +35,7 @@ abstract class AbstractReplayableEventMaterializer(
     */
   override def replayEvents(): Future[Offset] = {
     if (withPartialReplay) {
-      getOffset(viewIdentifier) flatMap { targetOffset =>
-        doReplay(targetOffset)
-      }
+      getOffset(viewIdentifier) flatMap { targetOffset => doReplay(targetOffset) }
     } else {
       doReplay(Offset.noOffset)
     }

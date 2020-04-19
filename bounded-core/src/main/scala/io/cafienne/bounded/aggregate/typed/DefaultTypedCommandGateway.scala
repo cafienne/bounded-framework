@@ -54,9 +54,7 @@ class DefaultTypedCommandGateway[Cmd <: DomainCommand](
 
     def apply(): Behavior[AggregateControl] =
       Behaviors
-        .setup[AggregateControl] { context =>
-          behaviors
-        }
+        .setup[AggregateControl] { context => behaviors }
 
     val behaviors: Behavior[CommandGatewayGuardian.AggregateControl] = Behaviors
       .receive[AggregateControl] { (context, message) =>
@@ -75,9 +73,7 @@ class DefaultTypedCommandGateway[Cmd <: DomainCommand](
           case GracefulShutdown =>
             context.log.info("Initiating graceful shutdown...")
             //Stopping the guardian will stop the aggregate root actors.
-            Behaviors.stopped { () =>
-              context.log.debug("Stopped base on message {}", message)
-            }
+            Behaviors.stopped { () => context.log.debug("Stopped base on message {}", message) }
           case AggregateTerminated(aggregateId) =>
             context.log.debug("Aggregate {} terminated", aggregateId)
             aggregates.-=(aggregateId)

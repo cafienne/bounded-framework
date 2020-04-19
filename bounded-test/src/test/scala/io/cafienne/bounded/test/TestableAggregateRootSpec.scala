@@ -44,9 +44,7 @@ class TestableAggregateRootSpec extends AsyncWordSpecLike with Matchers with Sca
       val ar = TestableAggregateRoot
         .given[TestAggregateRoot, TestAggregateRootState](testAggregateRootCreator, testAggregateRootId1)
 
-      ar.currentState map { state =>
-        assert(state.isEmpty)
-      }
+      ar.currentState map { state => assert(state.isEmpty) }
     }
 
     "create initial state in given" in {
