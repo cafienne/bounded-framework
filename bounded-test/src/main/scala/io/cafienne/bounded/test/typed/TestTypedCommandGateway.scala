@@ -23,7 +23,7 @@ class TestTypedCommandGateway[T <: DomainCommand](
 ) extends TypedCommandGateway[T] {
   import akka.actor.typed.scaladsl.AskPattern._
 
-  val aggregates = new mutable.Map[String, ActorRef[T]]()
+  val aggregates = mutable.Map[String, ActorRef[T]]()
 
   override def ask[Res](aggregateRootId: String, replyTo: ActorRef[Res] => T)(
     implicit validator: ValidateableCommand[T]
