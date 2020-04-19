@@ -23,7 +23,7 @@ lazy val basicSettings = {
       //"-Ywarn-unused-import"
     ),
     scalastyleConfig := baseDirectory.value / "project/scalastyle-config.xml",
-    scalafmtConfig := Some((baseDirectory in ThisBuild).value / "project/.scalafmt.conf"),
+    scalafmtConfig := (baseDirectory in ThisBuild).value / "project/.scalafmt.conf",
     scalafmtOnCompile := true,
 
     startYear := Some(2018),
