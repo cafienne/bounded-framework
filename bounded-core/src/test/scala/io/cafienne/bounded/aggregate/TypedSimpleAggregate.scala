@@ -10,7 +10,7 @@ import akka.persistence.typed.PersistenceId
 import akka.persistence.typed.scaladsl.{Effect, EventSourcedBehavior, ReplyEffect}
 import com.typesafe.scalalogging.Logger
 import io.cafienne.bounded.{BuildInfo, RuntimeInfo, UserContext}
-import io.cafienne.bounded.aggregate.typed.TypedAggregateRootCreator
+import io.cafienne.bounded.aggregate.typed.TypedAggregateRootManager
 import java.time.ZonedDateTime
 import java.util.UUID
 import scala.concurrent.duration._
@@ -143,7 +143,7 @@ object TypedSimpleAggregate {
 
 import TypedSimpleAggregate._
 
-class SimpleAggregateCreator() extends TypedAggregateRootCreator[SimpleAggregateCommand] {
+class SimpleAggregateManager() extends TypedAggregateRootManager[SimpleAggregateCommand] {
   import TypedSimpleAggregate._
   final val logger = Logger(this.getClass.getSimpleName)
 

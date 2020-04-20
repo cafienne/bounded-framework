@@ -7,7 +7,7 @@ package io.cafienne.bounded.test.typed
 import akka.actor.testkit.typed.scaladsl.ActorTestKit
 import akka.actor.typed.{ActorRef, Scheduler}
 import akka.util.Timeout
-import io.cafienne.bounded.aggregate.typed.{TypedAggregateRootCreator, TypedCommandGateway}
+import io.cafienne.bounded.aggregate.typed.{TypedAggregateRootManager, TypedCommandGateway}
 import io.cafienne.bounded.aggregate.{DomainCommand, ValidateableCommand}
 
 import scala.collection.mutable
@@ -15,7 +15,7 @@ import scala.concurrent.{ExecutionContext, Future}
 
 class TestTypedCommandGateway[T <: DomainCommand](
   testKit: ActorTestKit,
-  aggregateRootCreator: TypedAggregateRootCreator[T]
+  aggregateRootCreator: TypedAggregateRootManager[T]
 )(
   implicit timeout: Timeout,
   ec: ExecutionContext,

@@ -40,7 +40,7 @@ class TypedClusteredSpec extends ScalaTestWithActorTestKit(s"""
 
   val commandMetaData = AggregateCommandMetaData(ZonedDateTime.now(), None)
 
-  val creator = new SimpleAggregateCreator()
+  val creator = new SimpleAggregateManager()
 //  val sharding = ClusterSharding(system)
 //
 //  sharding.init(
@@ -51,7 +51,7 @@ class TypedClusteredSpec extends ScalaTestWithActorTestKit(s"""
     val commandMetaData = AggregateCommandMetaData(ZonedDateTime.now(), None)
 
     val aggregateId = "test0"
-    val creator     = new SimpleAggregateCreator()
+    val creator     = new SimpleAggregateManager()
     val actorRef    = spawn(creator.behavior(aggregateId), "testactor")
     val probe       = testKit.createTestProbe[Response]()
 

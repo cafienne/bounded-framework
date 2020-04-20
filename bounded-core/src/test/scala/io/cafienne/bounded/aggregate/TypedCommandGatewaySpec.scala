@@ -52,7 +52,7 @@ class TypedCommandGatewaySpec extends ScalaTestWithActorTestKit(s"""
   implicit val runtimeInfo    = RuntimeInfo("current")
 
   val commandMetaData     = AggregateCommandMetaData(ZonedDateTime.now(), None)
-  val creator             = new SimpleAggregateCreator()
+  val creator             = new SimpleAggregateManager()
   val typedCommandGateway = new DefaultTypedCommandGateway[SimpleAggregateCommand](system, creator)
 
   "Command Gateway" should "send Create command" in {

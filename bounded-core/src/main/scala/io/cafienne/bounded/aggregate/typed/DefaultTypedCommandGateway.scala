@@ -36,7 +36,7 @@ trait TypedCommandGateway[T <: DomainCommand] {
   */
 class DefaultTypedCommandGateway[Cmd <: DomainCommand](
   system: ActorSystem[_],
-  aggregateRootCreator: TypedAggregateRootCreator[Cmd]
+  aggregateRootCreator: TypedAggregateRootManager[Cmd]
 )(implicit timeout: Timeout, ec: ExecutionContext, scheduler: Scheduler)
     extends TypedCommandGateway[Cmd] {
 
