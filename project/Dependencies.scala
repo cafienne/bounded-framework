@@ -93,4 +93,10 @@ object Dependencies {
     )
   }
 
+  val persistenceJdbcDeps = {
+    baseDeps ++ Seq(
+      "com.github.dnvriend" %% "akka-persistence-jdbc" % "3.5.3"
+    )
+  }
+
 }
