@@ -12,7 +12,6 @@ import akka.persistence.typed.PersistenceId
 import io.cafienne.bounded.{BuildInfo, Id, RuntimeInfo, UserContext}
 
 import scala.collection.immutable.Seq
-import stamina.Persistable
 
 /**
   * Metadata of the event contains data that is used within the framework and may be used by the application
@@ -56,7 +55,7 @@ trait WithMetaData {
   def metaData: MetaData
 }
 
-trait DomainEvent extends Persistable with WithMetaData {
+trait DomainEvent extends WithMetaData {
 
   def id: String
 
