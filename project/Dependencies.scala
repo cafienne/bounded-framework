@@ -6,7 +6,7 @@ import sbt._
 
 object Dependencies {
 
-  val akkaVersion = "2.6.4"
+  val akkaVersion = "2.6.5"
   val akkaHttpVersion = "10.1.11"
   val staminaVersion = "0.1.5"
   val persistenceInMemVersion = "2.5.15.2"
@@ -95,7 +95,8 @@ object Dependencies {
 
   val persistenceJdbcDeps = {
     baseDeps ++ Seq(
-      "com.github.dnvriend" %% "akka-persistence-jdbc" % "3.5.3"
+      "com.github.dnvriend" %% "akka-persistence-jdbc" % "3.5.3",
+      "com.typesafe.slick" %% "slick" % "3.3.2"
     )
   }
 
