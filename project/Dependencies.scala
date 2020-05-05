@@ -29,6 +29,7 @@ object Dependencies {
       akkaModule("stream-testkit") % Test,
       akkaModule("testkit") % Test,
       akkaModule("actor-testkit-typed") % Test,
+      akkaModule("persistence-testkit") % Test,
       "io.spray"                    %% "spray-json"                             % "1.3.5",
       "com.github.dnvriend"         %% "akka-persistence-inmemory"              % persistenceInMemVersion,
       "com.typesafe.scala-logging"  %% "scala-logging"                          % "3.9.2"
@@ -62,6 +63,7 @@ object Dependencies {
       "org.scalatest"          %% "scalatest"                 % scalaTestVersion,
       "com.typesafe.akka"      %% "akka-testkit"              % akkaVersion,
       "com.typesafe.akka"      %% "akka-actor-testkit-typed"  % akkaVersion,
+      "com.typesafe.akka"      %% "akka-persistence-testkit"  % akkaVersion,
       "com.typesafe.akka"      %% "akka-http-testkit"         % akkaHttpVersion
     ) ++ test
   }

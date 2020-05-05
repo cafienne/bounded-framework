@@ -21,7 +21,7 @@ import scala.collection.immutable.Seq
 trait CommandMetaData {
   def timestamp: OffsetDateTime
   def userContext: Option[UserContext]
-  def commandId: UUID = UUID.randomUUID()
+  val commandId: UUID = UUID.randomUUID()
 }
 
 trait DomainCommand {
