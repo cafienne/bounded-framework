@@ -5,16 +5,23 @@
 package io.cafienne.bounded.test.typed
 
 import java.util.concurrent.atomic.AtomicInteger
+
 import akka.actor.ActorSystem
 import akka.actor.testkit.typed.scaladsl.ActorTestKit
+import akka.actor.typed.{Behavior, SupervisorStrategy}
+import akka.actor.typed.scaladsl.Behaviors
 import io.cafienne.bounded.test.typed.TestableAggregateRoot._
+
 import scala.reflect.ClassTag
 import akka.util.Timeout
 import io.cafienne.bounded.aggregate.{DomainCommand, DomainEvent, HandlingFailure}
 import io.cafienne.bounded.aggregate.typed._
+
 import scala.concurrent.duration.Duration
 import akka.actor.typed.scaladsl.adapter._
 import akka.persistence.testkit.scaladsl.PersistenceTestKit
+import akka.persistence.typed.PersistenceId
+
 import scala.collection.immutable
 
 /**
@@ -121,10 +128,13 @@ class TestableAggregateRoot[A <: DomainCommand, B <: DomainEvent, C: ClassTag] p
   import TestableAggregateRoot.testId
   final val arTestId        = testId(id)
   final val arTestIdInStore = manager.entityTypeKey.name + persistenceIdSeparator + arTestId
-  if (evt != null && evt.nonEmpty) persistenceTestKit.persistForRecovery(arTestIdInStore, evt)
+  if (evt != null && evt.nonEmpty)
+    persistenceTestKit.persistForRecovery(arTestIdInStore, evt)
 
   // Start the Aggregate Root and replay to initial state
-  private val aggregateRootActor = testKit.spawn(manager.behavior(arTestId), s"test-aggregate-$arTestId")
+  def supervise: Behavior[A] =
+    Behaviors.supervise(manager.behavior(arTestIdInStore)).onFailure(SupervisorStrategy.restart)
+  private val aggregateRootActor = testKit.spawn(supervise, s"test-aggregate-$arTestId")
 
   /**
     * After initialization of the aggregate root, the when allows to send a command and check thereafter what events are
@@ -158,6 +168,7 @@ class TestableAggregateRoot[A <: DomainCommand, B <: DomainEvent, C: ClassTag] p
   /** Events emitted by the aggregate root in reaction to command(s)
     */
   def events: List[DomainEvent] = {
+    if (lastCommand.isEmpty) throw NoCommandsIssued
     val unwanted = givenEvents.toSet
     persistenceTestKit.persistedInStorage(arTestIdInStore).map(_.asInstanceOf[B]).toList.filterNot(unwanted)
   }
@@ -168,6 +179,10 @@ class TestableAggregateRoot[A <: DomainCommand, B <: DomainEvent, C: ClassTag] p
 
   override def toString: String = {
     s"Aggregate Root ${ctag.runtimeClass.getSimpleName} $id"
+  }
+
+  def shutdown: Unit = {
+    testKit.shutdownTestKit()
   }
 
 }

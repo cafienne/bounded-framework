@@ -89,7 +89,7 @@ object Dependencies {
 
   val persistenceJdbcDeps = {
     baseDeps ++ Seq(
-      "com.github.dnvriend" %% "akka-persistence-jdbc" % "3.5.3",
+      "com.lightbend.akka" %% "akka-persistence-jdbc" % "4.0.0-RC2",
       "com.typesafe.slick" %% "slick" % "3.3.2"
     )
   }

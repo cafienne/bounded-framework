@@ -64,6 +64,9 @@ object TypedSimpleAggregate {
     replyTo: ActorRef[Response]
   ) extends SimpleAggregateCommand
 
+  final case class TriggerError(aggregateRootId: String, metaData: CommandMetaData, replyTo: ActorRef[Response])
+      extends SimpleAggregateCommand
+
   //NOTE that a GET on the aggregate is not according to the CQRS pattern and added here for testing.
   sealed trait SimpleDirectAggregateQuery extends SimpleAggregateCommand
 
@@ -77,10 +80,10 @@ object TypedSimpleAggregate {
   final case class StoppedAfter(id: String, metaData: MetaData, waitInSecs: Integer) extends SimpleAggregateEvent
 
   // State Type
-  final case class SimpleAggregateState(items: List[String] = List.empty[String]) {
+  final case class SimpleAggregateState(items: List[String] = List.empty[String], aggregateId: String) {
     def update(evt: SimpleAggregateEvent): SimpleAggregateState = {
       evt match {
-        case evt: Created      => this
+        case evt: Created      => this.copy(aggregateId = evt.id)
         case evt: ItemAdded    => this.copy(items = items.::(evt.item))
         case evt: StoppedAfter => this
       }
@@ -110,6 +113,11 @@ object TypedSimpleAggregate {
         case cmd: InternalStop =>
           logger.debug("InternalStop for aggregate {}", cmd.aggregateRootId)
           Effect.stop().thenNoReply()
+        case cmd: TriggerError =>
+          throw new RuntimeException(
+            "This is an exception thrown during processing the command for AR " + state.aggregateId
+          )
+          Effect.none.thenReply(cmd.replyTo)(_ => OK)
       }
   }
 
@@ -156,7 +164,7 @@ class SimpleAggregateManager() extends TypedAggregateRootManager[SimpleAggregate
       EventSourcedBehavior
         .withEnforcedReplies(
           PersistenceId(aggregateRootTag, id),
-          SimpleAggregateState(List.empty[String]),
+          SimpleAggregateState(List.empty[String], id),
           commandHandler(timers),
           eventHandler
         )
