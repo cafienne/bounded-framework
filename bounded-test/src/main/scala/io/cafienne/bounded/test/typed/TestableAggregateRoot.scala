@@ -8,7 +8,8 @@ import java.util.concurrent.atomic.AtomicInteger
 
 import akka.actor.ActorSystem
 import akka.actor.testkit.typed.scaladsl.ActorTestKit
-import akka.actor.typed.{Behavior, SupervisorStrategy}
+import akka.actor.typed.eventstream.EventStream.Subscribe
+import akka.actor.typed.{ActorRef, Behavior, ChildFailed, SupervisorStrategy, Terminated}
 import akka.actor.typed.scaladsl.Behaviors
 import io.cafienne.bounded.test.typed.TestableAggregateRoot._
 
@@ -20,7 +21,6 @@ import io.cafienne.bounded.aggregate.typed._
 import scala.concurrent.duration.Duration
 import akka.actor.typed.scaladsl.adapter._
 import akka.persistence.testkit.scaladsl.PersistenceTestKit
-import akka.persistence.typed.PersistenceId
 
 import scala.collection.immutable
 
@@ -43,6 +43,8 @@ import scala.collection.immutable
   * }}}
   */
 object TestableAggregateRoot {
+
+  case class AggregateThrownException(ex: Throwable) extends HandlingFailure
 
   case class CommandHandlingFailed(failure: HandlingFailure)
       extends Exception(s"Command handling failed with [$failure]")
@@ -128,13 +130,35 @@ class TestableAggregateRoot[A <: DomainCommand, B <: DomainEvent, C: ClassTag] p
   import TestableAggregateRoot.testId
   final val arTestId        = testId(id)
   final val arTestIdInStore = manager.entityTypeKey.name + persistenceIdSeparator + arTestId
-  if (evt != null && evt.nonEmpty)
-    persistenceTestKit.persistForRecovery(arTestIdInStore, evt)
+  if (evt != null && evt.nonEmpty) persistenceTestKit.persistForRecovery(arTestIdInStore, evt)
 
-  // Start the Aggregate Root and replay to initial state
   def supervise: Behavior[A] =
-    Behaviors.supervise(manager.behavior(arTestIdInStore)).onFailure(SupervisorStrategy.restart)
-  private val aggregateRootActor = testKit.spawn(supervise, s"test-aggregate-$arTestId")
+    Behaviors.supervise(handler).onFailure(SupervisorStrategy.stop)
+
+  def handler: Behavior[A] = Behaviors.setup { context =>
+    val aggregateRootActor = context.spawn(manager.behavior(arTestId), s"test-aggregate-$arTestId")
+    context.watch(aggregateRootActor)
+    Behaviors
+      .receiveMessage[A] { message =>
+        aggregateRootActor ! message
+        Behaviors.same
+      }
+      .receiveSignal(
+        {
+          case (context, ChildFailed(ref, sig)) =>
+            context.log.debug("behavior Failed " + sig.getMessage)
+            lastFailure = Some(AggregateThrownException(sig))
+            Behaviors.same
+          case other =>
+            context.log.debug("Received signal " + other)
+            Behaviors.same
+        }
+      )
+  }
+
+  private val wrappedActor = testKit.spawn(supervise, s"supervisor-$arTestId")
+  private val eventProbe   = testKit.createTestProbe[Any]("EventStreamProbe")
+  testKit.internalSystem.eventStream.tell(Subscribe(eventProbe.ref))
 
   /**
     * After initialization of the aggregate root, the when allows to send a command and check thereafter what events are
@@ -145,11 +169,11 @@ class TestableAggregateRoot[A <: DomainCommand, B <: DomainEvent, C: ClassTag] p
     */
   def when(command: A): TestableAggregateRoot[A, B, C] = {
     if (command.aggregateRootId != id) throw MisdirectedCommand(id, command)
-
-    //readJournal.persistenceIds()
-    //ask ?
-    aggregateRootActor.tell(command)
+    wrappedActor.tell(command)
     lastCommand = Some(command)
+    //    eventProbe.receiveMessages(2)
+    //    eventProbe.expectNoMessage())
+    Thread.sleep(1000)
     this
   }
 

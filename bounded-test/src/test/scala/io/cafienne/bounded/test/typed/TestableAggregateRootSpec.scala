@@ -17,9 +17,10 @@ import org.scalatest.flatspec.AsyncFlatSpecLike
 import akka.actor.typed.scaladsl.adapter._
 import akka.persistence.testkit.PersistenceTestKitPlugin
 import akka.persistence.testkit.scaladsl.PersistenceTestKit
-import com.typesafe.config.ConfigFactory
+import com.typesafe.config.{ConfigFactory, ConfigValue}
 import io.cafienne.bounded.test.DomainProtocol.StateTransitionForbidden
 import io.cafienne.bounded.test.typed.TestableAggregateRoot.{
+  AggregateThrownException,
   MisdirectedCommand,
   NoCommandsIssued,
   UnexpectedCommandHandlingSuccess
@@ -28,7 +29,11 @@ import io.cafienne.bounded.test.typed.TestableAggregateRoot.{
 import scala.concurrent.duration._
 
 class TestableAggregateRootSpec
-    extends ScalaTestWithActorTestKit(PersistenceTestKitPlugin.config.withFallback(ConfigFactory.defaultApplication()))
+    extends ScalaTestWithActorTestKit(
+      PersistenceTestKitPlugin.config
+        .withFallback(ConfigFactory.parseString("akka.actor.allow-java-serialization=true"))
+        .withFallback(ConfigFactory.defaultApplication())
+    )
     with AsyncFlatSpecLike
     with ScalaFutures
     with BeforeAndAfterAll { //with LogCapturing {
@@ -85,9 +90,11 @@ class TestableAggregateRootSpec
         Created(testAggregateRootId1, eventMetaData)
       )
       .when(TriggerError(testAggregateRootId1, commandMetaData, testProbe.ref))
-      //.events should be(List.empty)
-      .failure should be(StateTransitionForbidden(Some("not_new"), "updated"))
-
+      .failure match {
+      case AggregateThrownException(ex: IllegalArgumentException) =>
+        ex.getMessage should be("This is an exception thrown during processing the command for AR 3")
+      case other => fail("not expected: " + other)
+    }
   }
 
   it should "prevent handling of commands that target another aggregate" in {
@@ -121,7 +128,7 @@ class TestableAggregateRootSpec
         .failure
     }
     //TODO ... strange ?
-    testProbe.expectMessage(OK) should be(OK)
+//    testProbe.expectMessage(OK) should be(OK)
 
   }
 

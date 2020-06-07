@@ -114,7 +114,7 @@ object TypedSimpleAggregate {
           logger.debug("InternalStop for aggregate {}", cmd.aggregateRootId)
           Effect.stop().thenNoReply()
         case cmd: TriggerError =>
-          throw new RuntimeException(
+          throw new IllegalArgumentException(
             "This is an exception thrown during processing the command for AR " + state.aggregateId
           )
           Effect.none.thenReply(cmd.replyTo)(_ => OK)
