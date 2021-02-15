@@ -14,17 +14,13 @@ import akka.persistence.RecoveryCompleted
 import akka.persistence.typed.PersistenceId
 import akka.persistence.typed.scaladsl.{Effect, EventSourcedBehavior, ReplyEffect}
 import com.typesafe.scalalogging.Logger
-import io.cafienne.bounded.aggregate.{CommandMetaData, DomainCommand, DomainEvent, MetaData}
+import io.cafienne.bounded.aggregate.{DomainCommand, DomainEvent}
 import io.cafienne.bounded.aggregate.typed.TypedAggregateRootManager
-import io.cafienne.bounded.{BuildInfo, RuntimeInfo, UserContext}
-
+import io.cafienne.bounded.test.DomainProtocol._
 import scala.concurrent.duration._
 
 object TypedSimpleAggregate {
   val aggregateRootTag = "ar-simple"
-
-  implicit val buildInfo   = BuildInfo("spec", "1.0")
-  implicit val runtimeInfo = RuntimeInfo("current")
 
   var replayed = false
 
@@ -36,41 +32,41 @@ object TypedSimpleAggregate {
   final case class Items(items: List[String]) extends Response
 
   // Command Type
-  final case class AggregateCommandMetaData(timestamp: OffsetDateTime, userContext: Option[UserContext])
-      extends CommandMetaData
+//  final case class AggregateCommandMetaData(timestamp: OffsetDateTime, userContext: Option[UserContext])
+//      extends CommandMetaData
 
   sealed trait SimpleAggregateCommand extends DomainCommand
 
-  final case class Create(aggregateRootId: String, metaData: CommandMetaData, replyTo: ActorRef[Response])
+  final case class Create(aggregateRootId: String, metaData: TestCommandMetaData, replyTo: ActorRef[Response])
       extends SimpleAggregateCommand
 
   final case class AddItem(
     aggregateRootId: String,
-    metaData: CommandMetaData,
+    metaData: TestCommandMetaData,
     item: String,
     replyTo: ActorRef[Response]
   ) extends SimpleAggregateCommand
 
-  final case class Stop(aggregateRootId: String, metaData: CommandMetaData, replyTo: ActorRef[Response])
+  final case class Stop(aggregateRootId: String, metaData: TestCommandMetaData, replyTo: ActorRef[Response])
       extends SimpleAggregateCommand
 
-  private final case class InternalStop(aggregateRootId: String, metaData: CommandMetaData)
+  private final case class InternalStop(aggregateRootId: String, metaData: TestCommandMetaData)
       extends SimpleAggregateCommand
 
   final case class StopAfter(
     aggregateRootId: String,
-    metaData: CommandMetaData,
+    metaData: TestCommandMetaData,
     waitInSecs: Integer,
     replyTo: ActorRef[Response]
   ) extends SimpleAggregateCommand
 
-  final case class TriggerError(aggregateRootId: String, metaData: CommandMetaData, replyTo: ActorRef[Response])
+  final case class TriggerError(aggregateRootId: String, metaData: TestCommandMetaData, replyTo: ActorRef[Response])
       extends SimpleAggregateCommand
 
   //NOTE that a GET on the aggregate is not according to the CQRS pattern and added here for testing.
   sealed trait SimpleDirectAggregateQuery extends SimpleAggregateCommand
 
-  final case class GetItems(aggregateRootId: String, metaData: CommandMetaData, replyTo: ActorRef[Response])
+  final case class GetItems(aggregateRootId: String, metaData: TestCommandMetaData, replyTo: ActorRef[Response])
       extends SimpleDirectAggregateQuery
 
   // Event Type
@@ -182,24 +178,20 @@ class SimpleAggregateManager() extends TypedAggregateRootManager[SimpleAggregate
     EntityTypeKey[SimpleAggregateCommand](aggregateRootTag)
 }
 
-case class TestMetaData(
-  timestamp: OffsetDateTime,
-  userContext: Option[UserContext],
-  causedByCommand: Option[UUID],
-  buildInfo: BuildInfo,
-  runTimeInfo: RuntimeInfo
-) extends MetaData
-
-object TestMetaData {
-  def fromCommand(
-    metadata: CommandMetaData
-  )(implicit buildInfo: BuildInfo, runtimeInfo: RuntimeInfo): TestMetaData = {
-    TestMetaData(
-      metadata.timestamp,
-      metadata.userContext,
-      Some(metadata.commandId),
-      buildInfo,
-      runtimeInfo
-    )
-  }
-}
+//case class TestMetaData(
+//  timestamp: OffsetDateTime,
+//  userContext: Option[UserContext],
+//  causedByCommand: Option[UUID]
+//) extends MetaData
+//
+//object TestMetaData {
+//  def fromCommand(
+//    metadata: CommandMetaData
+//  ): TestMetaData = {
+//    TestMetaData(
+//      metadata.timestamp,
+//      metadata.userContext,
+//      Some(metadata.commandId)
+//    )
+//  }
+//}

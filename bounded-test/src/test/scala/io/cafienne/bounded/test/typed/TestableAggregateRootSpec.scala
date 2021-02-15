@@ -10,7 +10,7 @@ import akka.actor.testkit.typed.scaladsl.{ActorTestKit, LogCapturing, ScalaTestW
 import akka.actor.typed.ActorRef
 import akka.util.Timeout
 import io.cafienne.bounded.aggregate.typed.TypedAggregateRootManager
-import io.cafienne.bounded.{BuildInfo, RuntimeInfo}
+import io.cafienne.bounded.test.DomainProtocol._
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.flatspec.AsyncFlatSpecLike
@@ -18,7 +18,6 @@ import akka.actor.typed.scaladsl.adapter._
 import akka.persistence.testkit.PersistenceTestKitPlugin
 import akka.persistence.testkit.scaladsl.PersistenceTestKit
 import com.typesafe.config.{ConfigFactory, ConfigValue}
-import io.cafienne.bounded.test.DomainProtocol.StateTransitionForbidden
 import io.cafienne.bounded.test.typed.TestableAggregateRoot.{
   AggregateThrownException,
   MisdirectedCommand,
@@ -46,8 +45,6 @@ class TestableAggregateRootSpec
   behavior of "Testable Typed Aggregate Root"
 
   implicit val gatewayTimeout = Timeout(10.seconds)
-  implicit val buildInfo      = BuildInfo("spec", "1.0")
-  implicit val runtimeInfo    = RuntimeInfo("current")
   implicit val actorSytem     = system
 
   val creator: TypedAggregateRootManager[SimpleAggregateCommand] = new SimpleAggregateManager()
@@ -57,8 +54,8 @@ class TestableAggregateRootSpec
 //  }
 
   "TestableAggregateRoot" should "be created with initial events" in {
-    val commandMetaData = AggregateCommandMetaData(OffsetDateTime.now(), None)
-    val eventMetaData   = TestMetaData.fromCommand(commandMetaData)(buildInfo, runtimeInfo)
+    val commandMetaData = TestCommandMetaData(OffsetDateTime.now(), None)
+    val eventMetaData   = TestMetaData.fromCommand(commandMetaData)
     val aggregateId     = "ar0"
 
     val testProbe = TestProbe[Response]()
@@ -77,8 +74,8 @@ class TestableAggregateRootSpec
   }
 
   it should "provide command handling failure for assertions" in {
-    val commandMetaData      = AggregateCommandMetaData(OffsetDateTime.now(), None)
-    val eventMetaData        = TestMetaData.fromCommand(commandMetaData)(buildInfo, runtimeInfo)
+    val commandMetaData      = TestCommandMetaData(OffsetDateTime.now(), None)
+    val eventMetaData        = TestMetaData.fromCommand(commandMetaData)
     val testAggregateRootId1 = "3"
     val testProbe            = TestProbe[Response]()
 
@@ -97,7 +94,7 @@ class TestableAggregateRootSpec
   }
 
   it should "prevent handling of commands that target another aggregate" in {
-    val commandMetaData = AggregateCommandMetaData(OffsetDateTime.now(), None)
+    val commandMetaData = TestCommandMetaData(OffsetDateTime.now(), None)
     val aggregateRootId = "4"
     val wrongId         = "5"
     val testProbe       = TestProbe[Response]()
@@ -110,8 +107,8 @@ class TestableAggregateRootSpec
   }
 
   it should "signal that handling was successful despite expected failure" in {
-    val commandMetaData = AggregateCommandMetaData(OffsetDateTime.now(), None)
-    val eventMetaData   = TestMetaData.fromCommand(commandMetaData)(buildInfo, runtimeInfo)
+    val commandMetaData = TestCommandMetaData(OffsetDateTime.now(), None)
+    val eventMetaData   = TestMetaData.fromCommand(commandMetaData)
 
     val aggregateRootId = "3"
     val testProbe       = TestProbe[Response]()
@@ -132,8 +129,8 @@ class TestableAggregateRootSpec
   }
 
   it should "tell that no point expecting failure when no commands were issued" in {
-    val commandMetaData = AggregateCommandMetaData(OffsetDateTime.now(), None)
-    val eventMetaData   = TestMetaData.fromCommand(commandMetaData)(buildInfo, runtimeInfo)
+    val commandMetaData = TestCommandMetaData(OffsetDateTime.now(), None)
+    val eventMetaData   = TestMetaData.fromCommand(commandMetaData)
     val aggregateRootId = "3"
 
     an[NoCommandsIssued.type] should be thrownBy {
@@ -148,8 +145,8 @@ class TestableAggregateRootSpec
   }
 
   it should "tell that no point expecting events when no commands were issued" in {
-    val commandMetaData = AggregateCommandMetaData(OffsetDateTime.now(), None)
-    val eventMetaData   = TestMetaData.fromCommand(commandMetaData)(buildInfo, runtimeInfo)
+    val commandMetaData = TestCommandMetaData(OffsetDateTime.now(), None)
+    val eventMetaData   = TestMetaData.fromCommand(commandMetaData)
     val aggregateRootId = "3"
 
     an[NoCommandsIssued.type] should be thrownBy {
