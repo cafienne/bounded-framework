@@ -20,8 +20,6 @@ import scala.concurrent.duration._
 trait TestJournalProvider {
   implicit def journalActorSystem: ActorSystem = ???
 
-  implicit val materializer: ActorMaterializer = ActorMaterializer()
-
   private lazy val readJournal = PersistenceQuery(journalActorSystem)
     .readJournalFor[InMemoryReadJournal](InMemoryReadJournal.Identifier)
     .asInstanceOf[

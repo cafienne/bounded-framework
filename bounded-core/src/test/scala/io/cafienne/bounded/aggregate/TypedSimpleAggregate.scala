@@ -10,8 +10,7 @@ import akka.persistence.typed.PersistenceId
 import akka.persistence.typed.scaladsl.{Effect, EventSourcedBehavior, ReplyEffect}
 import com.typesafe.scalalogging.Logger
 import io.cafienne.bounded.aggregate.typed.TypedAggregateRootManager
-
-import java.time.{OffsetDateTime, ZonedDateTime}
+import java.time.OffsetDateTime
 import java.util.UUID
 import scala.concurrent.duration._
 import akka.actor.typed.scaladsl.{Behaviors, TimerScheduler}
@@ -119,17 +118,6 @@ object TypedSimpleAggregate {
       .persist(ItemAdded(cmd.aggregateRootId, TestMetaData.fromCommand(cmd.metaData), cmd.item))
       .thenReply(cmd.replyTo)(_ ⇒ OK)
   }
-
-  private def stopAfter(cmd: StopAfter): ReplyEffect[SimpleAggregateEvent, SimpleAggregateState] = {
-    logger.debug("StoppedAfter " + cmd)
-    Effect
-      .persist(StoppedAfter(cmd.aggregateRootId, TestMetaData.fromCommand(cmd.metaData), cmd.waitInSecs))
-      .thenReply(cmd.replyTo)(_ ⇒ OK)
-  }
-
-  //  private def getItems(cmd: GetItems): ReplyEffect[SimpleAggregateEvent, SimpleAggregateState] = {
-  //    Effect.reply(cmd)(_ => OK)
-  //  }
 
   // event handler to keep internal aggregate state
   val eventHandler: (SimpleAggregateState, SimpleAggregateEvent) => SimpleAggregateState = { (state, event) =>

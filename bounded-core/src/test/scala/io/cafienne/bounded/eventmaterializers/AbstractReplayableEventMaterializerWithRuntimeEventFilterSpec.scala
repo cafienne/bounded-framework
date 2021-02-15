@@ -4,9 +4,7 @@
 
 package io.cafienne.bounded.eventmaterializers
 
-import java.time.{OffsetDateTime, ZonedDateTime}
-import java.util.UUID
-
+import java.time.OffsetDateTime
 import akka.Done
 import akka.actor.{ActorSystem, PoisonPill, Props}
 import akka.event.{Logging, LoggingAdapter}
@@ -15,7 +13,6 @@ import akka.testkit.{TestKit, TestProbe}
 import akka.util.Timeout
 import com.typesafe.scalalogging.Logger
 import io.cafienne.bounded.aggregate.DomainEvent
-import io.cafienne.bounded._
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.matchers.should.Matchers

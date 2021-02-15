@@ -4,10 +4,9 @@
 
 package io.cafienne.bounded.aggregate
 
-import java.time.{OffsetDateTime, ZonedDateTime}
+import java.time.OffsetDateTime
 
-import akka.actor.testkit.typed.javadsl.LoggingTestKit
-import akka.actor.testkit.typed.scaladsl.{LogCapturing, ManualTime, ScalaTestWithActorTestKit}
+import akka.actor.testkit.typed.scaladsl.ScalaTestWithActorTestKit
 import akka.actor.typed.ActorSystem
 import akka.util.Timeout
 import io.cafienne.bounded.aggregate.typed.DefaultTypedCommandGateway
@@ -116,7 +115,7 @@ class TypedCommandGatewaySpec extends ScalaTestWithActorTestKit(s"""
   }
 
   protected override def afterAll(): Unit = {
-    Await.ready(typedCommandGateway.shutdown(), 5.seconds)
+    Await.ready(typedCommandGateway.shutdown(), 5.seconds).map(_ => (): Unit)
   }
 
 }

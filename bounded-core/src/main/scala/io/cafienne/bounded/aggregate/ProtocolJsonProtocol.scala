@@ -12,8 +12,6 @@ import spray.json._
 
 object ProtocolJsonProtocol {
 
-  import spray.json.DefaultJsonProtocol._
-
   def jsonEnum[T <: Enumeration](enu: T): JsonFormat[T#Value] =
     new JsonFormat[T#Value] {
       def write(obj: T#Value): JsValue = JsString(obj.toString)

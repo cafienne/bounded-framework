@@ -5,8 +5,6 @@
 package io.cafienne.bounded.aggregate
 
 import akka.actor.typed.ActorRef
-import akka.persistence.typed.PersistenceId
-
 import scala.collection.immutable.Seq
 
 trait DomainCommand {
@@ -23,8 +21,8 @@ trait DomainEvent {
 
 trait HandlingFailure
 
-class AggregateNotInitialized(id: PersistenceId) extends HandlingFailure
-class UnexpectedCommand(command: DomainCommand)  extends HandlingFailure
+//class AggregateNotInitialized(id: PersistenceId) extends HandlingFailure
+class UnexpectedCommand(command: DomainCommand) extends HandlingFailure
 
 sealed trait Reply
 

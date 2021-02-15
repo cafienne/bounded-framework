@@ -4,10 +4,9 @@
 
 package io.cafienne.bounded.test.typed
 
-import java.time.{OffsetDateTime, ZonedDateTime}
+import java.time.OffsetDateTime
 
-import akka.actor.testkit.typed.scaladsl.{ActorTestKit, LogCapturing, ScalaTestWithActorTestKit, TestProbe}
-import akka.actor.typed.ActorRef
+import akka.actor.testkit.typed.scaladsl.{ActorTestKit, ScalaTestWithActorTestKit, TestProbe}
 import akka.util.Timeout
 import io.cafienne.bounded.aggregate.typed.TypedAggregateRootManager
 import io.cafienne.bounded.test.DomainProtocol._
@@ -17,7 +16,7 @@ import org.scalatest.flatspec.AsyncFlatSpecLike
 import akka.actor.typed.scaladsl.adapter._
 import akka.persistence.testkit.PersistenceTestKitPlugin
 import akka.persistence.testkit.scaladsl.PersistenceTestKit
-import com.typesafe.config.{ConfigFactory, ConfigValue}
+import com.typesafe.config.ConfigFactory
 import io.cafienne.bounded.test.typed.TestableAggregateRoot.{
   AggregateThrownException,
   MisdirectedCommand,

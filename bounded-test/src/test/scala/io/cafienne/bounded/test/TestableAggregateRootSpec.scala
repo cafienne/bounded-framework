@@ -4,11 +4,9 @@
 
 package io.cafienne.bounded.test
 
-import java.time.{OffsetDateTime, ZonedDateTime}
-
+import java.time.OffsetDateTime
 import akka.actor.ActorSystem
 import akka.event.{Logging, LoggingAdapter}
-import akka.persistence.typed.PersistenceId
 import akka.testkit.TestKit
 import akka.util.Timeout
 import io.cafienne.bounded.test.TestableAggregateRoot._

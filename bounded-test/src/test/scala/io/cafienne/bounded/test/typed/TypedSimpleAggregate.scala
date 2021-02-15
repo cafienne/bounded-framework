@@ -4,9 +4,6 @@
 
 package io.cafienne.bounded.test.typed
 
-import java.time.{OffsetDateTime, ZonedDateTime}
-import java.util.UUID
-
 import akka.actor.typed.scaladsl.{Behaviors, TimerScheduler}
 import akka.actor.typed.{ActorRef, Behavior}
 import akka.cluster.sharding.typed.scaladsl.EntityTypeKey
@@ -30,10 +27,6 @@ object TypedSimpleAggregate {
   case object OK                              extends Response
   final case class KO(reason: String)         extends Response
   final case class Items(items: List[String]) extends Response
-
-  // Command Type
-//  final case class AggregateCommandMetaData(timestamp: OffsetDateTime, userContext: Option[UserContext])
-//      extends CommandMetaData
 
   sealed trait SimpleAggregateCommand extends DomainCommand
 
@@ -79,9 +72,9 @@ object TypedSimpleAggregate {
   final case class SimpleAggregateState(items: List[String] = List.empty[String], aggregateId: String) {
     def update(evt: SimpleAggregateEvent): SimpleAggregateState = {
       evt match {
-        case evt: Created      => this.copy(aggregateId = evt.id)
-        case evt: ItemAdded    => this.copy(items = items.::(evt.item))
-        case evt: StoppedAfter => this
+        case evt: Created    => this.copy(aggregateId = evt.id)
+        case evt: ItemAdded  => this.copy(items = items.::(evt.item))
+        case _: StoppedAfter => this
       }
     }
   }
@@ -99,7 +92,6 @@ object TypedSimpleAggregate {
           logger.debug("Stopping Aggregate {}", cmd.aggregateRootId)
           //timers.cancelAll()
           Effect.stop().thenReply(cmd.replyTo)(_ => OK)
-        //case cmd: GetItems => getItems(cmd)
         case cmd: StopAfter =>
           timers.startSingleTimer(
             InternalStop(aggregateRootId = cmd.aggregateRootId, metaData = cmd.metaData),
@@ -109,11 +101,13 @@ object TypedSimpleAggregate {
         case cmd: InternalStop =>
           logger.debug("InternalStop for aggregate {}", cmd.aggregateRootId)
           Effect.stop().thenNoReply()
-        case cmd: TriggerError =>
+        case cmd: GetItems =>
+          logger.debug("Get Items not yet implemented for {}", cmd.aggregateRootId)
+          Effect.none.thenReply(cmd.replyTo)(_ => KO("Not yet implemented"))
+        case _: TriggerError =>
           throw new IllegalArgumentException(
             "This is an exception thrown during processing the command for AR " + state.aggregateId
           )
-          Effect.none.thenReply(cmd.replyTo)(_ => OK)
       }
   }
 
@@ -128,17 +122,6 @@ object TypedSimpleAggregate {
       .persist(ItemAdded(cmd.aggregateRootId, TestMetaData.fromCommand(cmd.metaData), cmd.item))
       .thenReply(cmd.replyTo)(_ ⇒ OK)
   }
-
-  private def stopAfter(cmd: StopAfter): ReplyEffect[SimpleAggregateEvent, SimpleAggregateState] = {
-    logger.debug("StoppedAfter " + cmd)
-    Effect
-      .persist(StoppedAfter(cmd.aggregateRootId, TestMetaData.fromCommand(cmd.metaData), cmd.waitInSecs))
-      .thenReply(cmd.replyTo)(_ ⇒ OK)
-  }
-
-  //  private def getItems(cmd: GetItems): ReplyEffect[SimpleAggregateEvent, SimpleAggregateState] = {
-  //    Effect.reply(cmd)(_ => OK)
-  //  }
 
   // event handler to keep internal aggregate state
   val eventHandler: (SimpleAggregateState, SimpleAggregateEvent) => SimpleAggregateState = { (state, event) =>
@@ -166,7 +149,7 @@ class SimpleAggregateManager() extends TypedAggregateRootManager[SimpleAggregate
           eventHandler
         )
         .receiveSignal {
-          case (state, b: RecoveryCompleted) => {
+          case (state, _: RecoveryCompleted) => {
             logger.debug("Received RecoveryCompleted for actor with state {}", state)
             replayed = true
           }

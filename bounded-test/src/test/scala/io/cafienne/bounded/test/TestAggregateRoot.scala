@@ -8,9 +8,6 @@ import akka.actor.{ActorSystem, Props}
 import io.cafienne.bounded.aggregate._
 import io.cafienne.bounded.test.DomainProtocol.StateUpdated
 import io.cafienne.bounded.test.TestAggregateRoot.TestAggregateRootState
-
-import java.time.OffsetDateTime
-import java.util.UUID
 import scala.collection.immutable.Seq
 
 class TestAggregateRoot(aggregateRootId: String) extends AggregateRootActor[TestAggregateRootState] {

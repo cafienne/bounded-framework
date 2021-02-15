@@ -4,7 +4,6 @@
 
 package io.cafienne.bounded.eventmaterializers
 
-import io.cafienne.bounded._
 import io.cafienne.bounded.aggregate.DomainEvent
 
 /**
