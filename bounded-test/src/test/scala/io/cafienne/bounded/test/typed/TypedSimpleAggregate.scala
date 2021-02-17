@@ -160,21 +160,3 @@ class SimpleAggregateManager() extends TypedAggregateRootManager[SimpleAggregate
   override def entityTypeKey: EntityTypeKey[SimpleAggregateCommand] =
     EntityTypeKey[SimpleAggregateCommand](aggregateRootTag)
 }
-
-//case class TestMetaData(
-//  timestamp: OffsetDateTime,
-//  userContext: Option[UserContext],
-//  causedByCommand: Option[UUID]
-//) extends MetaData
-//
-//object TestMetaData {
-//  def fromCommand(
-//    metadata: CommandMetaData
-//  ): TestMetaData = {
-//    TestMetaData(
-//      metadata.timestamp,
-//      metadata.userContext,
-//      Some(metadata.commandId)
-//    )
-//  }
-//}

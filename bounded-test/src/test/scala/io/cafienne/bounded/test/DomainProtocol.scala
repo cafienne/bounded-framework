@@ -11,11 +11,9 @@ import java.util.UUID
 
 object DomainProtocol {
 
-  trait Id {
+  trait UserId {
     def idAsString: String
   }
-
-  trait UserId extends Id
 
   trait UserContext {
     def userId: UserId
