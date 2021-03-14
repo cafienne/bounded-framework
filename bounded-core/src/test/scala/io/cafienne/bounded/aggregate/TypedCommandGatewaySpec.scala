@@ -5,13 +5,7 @@
 package io.cafienne.bounded.aggregate
 
 import java.time.OffsetDateTime
-import akka.actor.testkit.typed.scaladsl.{
-  LogCapturing,
-  LoggingTestKit,
-  ManualTime,
-  ScalaTestWithActorTestKit,
-  TestProbe
-}
+import akka.actor.testkit.typed.scaladsl.{LogCapturing, LoggingTestKit, ManualTime, ScalaTestWithActorTestKit, TestProbe}
 import akka.actor.typed.ActorSystem
 import akka.util.Timeout
 import io.cafienne.bounded.aggregate.typed.DefaultTypedCommandGateway
@@ -19,6 +13,7 @@ import org.scalatest.BeforeAndAfterAll
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.flatspec.AsyncFlatSpecLike
 import com.typesafe.config.ConfigFactory
+import io.cafienne.bounded.aggregate.TypedAnotherAggregate.AnotherAddCommand
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
@@ -149,13 +144,6 @@ class TypedCommandGatewaySpec
       val probeAnswer2 = probe.expectMessage(OK)
       assert(probeAnswer2.equals(OK))
     }
-  }
-
-  "Command Gateway" should "be able to be created multiple times to route to other aggregates" in {
-    val creator             = new AnotherAggregateManager()
-    val anotherTypedCommandGateway = new DefaultTypedCommandGateway[SimpleAggregateCommand](system, creator, 6.seconds)
-
-    assert(anotherTypedCommandGateway != null)
   }
 
   protected override def afterAll(): Unit = {

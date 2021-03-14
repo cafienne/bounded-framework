@@ -33,7 +33,7 @@ object TypedSimpleAggregate {
   final case class AggregateCommandMetaData(timestamp: OffsetDateTime, userContext: Option[UserContext])
       extends CommandMetaData
 
-  sealed trait SimpleAggregateCommand extends DomainCommand
+  trait SimpleAggregateCommand extends DomainCommand
 
   final case class Create(aggregateRootId: String, metaData: CommandMetaData, replyTo: ActorRef[Response])
       extends SimpleAggregateCommand
@@ -48,8 +48,7 @@ object TypedSimpleAggregate {
   final case class Stop(aggregateRootId: String, metaData: CommandMetaData, replyTo: ActorRef[Response])
       extends SimpleAggregateCommand
 
-  final case class InternalStop(aggregateRootId: String, metaData: CommandMetaData)
-      extends SimpleAggregateCommand
+  final case class InternalStop(aggregateRootId: String, metaData: CommandMetaData) extends SimpleAggregateCommand
 
   final case class StopAfter(
     aggregateRootId: String,
@@ -65,7 +64,7 @@ object TypedSimpleAggregate {
       extends SimpleDirectAggregateQuery
 
   // Event Type
-  sealed trait SimpleAggregateEvent                                                  extends DomainEvent
+  trait SimpleAggregateEvent                                                         extends DomainEvent
   final case class Created(id: String, metaData: MetaData)                           extends SimpleAggregateEvent
   final case class ItemAdded(id: String, metaData: MetaData, item: String)           extends SimpleAggregateEvent
   final case class StoppedAfter(id: String, metaData: MetaData, waitInSecs: Integer) extends SimpleAggregateEvent
@@ -104,6 +103,9 @@ object TypedSimpleAggregate {
         case cmd: InternalStop =>
           logger.debug("InternalStop for aggregate {}", cmd.aggregateRootId)
           Effect.stop().thenNoReply()
+        case other =>
+          logger.error("Received {} that cannot be handled by {}", other, this.getClass.getSimpleName)
+          throw new RuntimeException(s"Command $other cannot be handled by SimpleAggregate")
       }
   }
 
