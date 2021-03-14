@@ -19,8 +19,7 @@ import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 
 //ManualTime.config.withFallback(
-class TypedMultiCommandGatewaySpec
-    extends ScalaTestWithActorTestKit(ConfigFactory.parseString(s"""
+class TypedMultiCommandGatewaySpec extends ScalaTestWithActorTestKit(ConfigFactory.parseString(s"""
     akka.persistence.publish-plugin-commands = on
     akka.persistence.journal.plugin = "akka.persistence.journal.inmem"
     akka.persistence.journal.inmem.test-serialization = on
@@ -33,10 +32,7 @@ class TypedMultiCommandGatewaySpec
     akka.coordinated-shutdown.run-by-actor-system-terminate = off
     akka.coordinated-shutdown.run-by-jvm-shutdown-hook = off
     akka.cluster.run-coordinated-shutdown-when-down = off
-    """))
-    with AsyncFlatSpecLike
-    with ScalaFutures
-    with BeforeAndAfterAll {
+    """)) with AsyncFlatSpecLike with ScalaFutures with BeforeAndAfterAll {
 
   import TypedSimpleAggregate._
 
@@ -59,20 +55,23 @@ class TypedMultiCommandGatewaySpec
   val creator             = new SimpleAggregateManager()
   val typedCommandGateway = new DefaultTypedCommandGateway[SimpleAggregateCommand](system, creator, 6.seconds)
 
-  val anotherCreator                    = new AnotherAggregateManager()
-  val anotherTypedCommandGateway = new DefaultTypedCommandGateway[SimpleAggregateCommand](system, anotherCreator, 6.seconds)
+  val anotherCreator = new AnotherAggregateManager()
+  val anotherTypedCommandGateway =
+    new DefaultTypedCommandGateway[SimpleAggregateCommand](system, anotherCreator, 6.seconds)
 
   "Command Gateway" should "be able to be created multiple times to route to other aggregates" in {
     assert(anotherTypedCommandGateway != null)
   }
 
   "Command Gateway" should "be able to be send commands to multiple aggregates" in {
-    val probe           = testKit.createTestProbe[Response]()
+    val probe       = testKit.createTestProbe[Response]()
     val aggregateId = "ar1"
 
     assert(anotherTypedCommandGateway != null)
     val otherAggregateId = "other1"
-    whenReady(anotherTypedCommandGateway.tell(AnotherAddCommand(otherAggregateId, commandMetaData, "other item 3", probe.ref))) { answer =>
+    whenReady(
+      anotherTypedCommandGateway.tell(AnotherAddCommand(otherAggregateId, commandMetaData, "other item 3", probe.ref))
+    ) { answer =>
       answer shouldEqual (())
       val probeAnswer2 = probe.expectMessage(OK)
       assert(probeAnswer2.equals(OK))
@@ -83,7 +82,6 @@ class TypedMultiCommandGatewaySpec
       val probeAnswer2 = probe.expectMessage(OK)
       assert(probeAnswer2.equals(OK))
     }
-
 
   }
 

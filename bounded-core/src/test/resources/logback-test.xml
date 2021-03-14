@@ -1,20 +1,4 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- The first configuration is for debugging tests and ensure more logging is seen (so withtout the capture)
-<!--<configuration>-->
-
-<!--    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">-->
-<!--        <encoder>-->
-<!--            <pattern>%d [%t] %highlight(%-5p) %cyan(%logger{25}) - %m%n</pattern>-->
-<!--        </encoder>-->
-<!--    </appender>-->
-
-<!--    <logger name="akka" level="DEBUG" />-->
-<!--    <root level="DEBUG">-->
-<!--        <appender-ref ref="STDOUT"/>-->
-<!--    </root>-->
-
-<!--</configuration>-->
-
 <configuration>
 
     <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">

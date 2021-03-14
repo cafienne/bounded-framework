@@ -53,8 +53,8 @@ object TypedAnotherAggregate {
     (state, command) =>
       logger.debug("Received command: " + command)
       command match {
-        case cmd: Create  => createAggregate(cmd)
-        case cmd: AddItem => addItem(cmd)
+        case cmd: Create            => createAggregate(cmd)
+        case cmd: AddItem           => addItem(cmd)
         case cmd: AnotherAddCommand => addAnother(cmd)
         case cmd: Stop =>
           logger.debug("Stopping Aggregate {}", cmd.aggregateRootId)

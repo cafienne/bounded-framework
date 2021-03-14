@@ -5,7 +5,13 @@
 package io.cafienne.bounded.aggregate
 
 import java.time.OffsetDateTime
-import akka.actor.testkit.typed.scaladsl.{LogCapturing, LoggingTestKit, ManualTime, ScalaTestWithActorTestKit, TestProbe}
+import akka.actor.testkit.typed.scaladsl.{
+  LogCapturing,
+  LoggingTestKit,
+  ManualTime,
+  ScalaTestWithActorTestKit,
+  TestProbe
+}
 import akka.actor.typed.ActorSystem
 import akka.util.Timeout
 import io.cafienne.bounded.aggregate.typed.DefaultTypedCommandGateway
