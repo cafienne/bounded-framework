@@ -32,19 +32,16 @@ class TestableProjectionSpec extends AsyncWordSpecLike with Matchers with ScalaF
 
   implicit val logger: LoggingAdapter = Logging(system, getClass)
 
-  val testProjectionMaterializer = new TestProjectionMaterializer(system) with OffsetStoreProvider
   val metaDate                   = TestMetaData(OffsetDateTime.now(), None, None)
 
   "The testable projection" must {
-
+    val testProjectionMaterializer = new TestProjectionMaterializer(system) with OffsetStoreProvider
     val testAggregateRootId1 = "arTest1"
     val evt1                 = InitialStateCreated(metaDate, testAggregateRootId1, "initialState")
     val evt2                 = StateUpdated(metaDate, testAggregateRootId1, "updatedState")
-
     val fixture = TestableProjection.given(Seq(evt1, evt2), Set("ar-test", "aggregate"))
 
     "Store basic events at the start" in {
-
       whenReady(fixture.startProjection(testProjectionMaterializer)) { replayResult =>
         logger.info("replayResult: {}", replayResult)
         assert(replayResult.offset == Some(Sequence(2L)))
@@ -53,13 +50,17 @@ class TestableProjectionSpec extends AsyncWordSpecLike with Matchers with ScalaF
 
     "Store more events" in {
       val evt3 = StateUpdated(metaDate, testAggregateRootId1, "morestate")
-
       fixture.addEvent(evt3)
-
       testProjectionMaterializer.events.size should be(3)
     }
 
+    "Store more events slowly" in {
+      val evt4 = SlowStateUpdated(metaDate, testAggregateRootId1, "morestate", 3000L)
+      fixture.addEvent(evt4)
+      testProjectionMaterializer.events.size should be(4)
+    }
   }
+
 }
 
 class TestProjectionMaterializer(actorSystem: ActorSystem) extends AbstractReplayableEventMaterializer(actorSystem) {
@@ -89,6 +90,10 @@ class TestProjectionMaterializer(actorSystem: ActorSystem) extends AbstractRepla
           events = events :+ event
           Future.successful(Done)
         case event: StateUpdated =>
+          events = events :+ event
+          Future.successful(Done)
+        case event: SlowStateUpdated =>
+          Thread.sleep(event.waited)
           events = events :+ event
           Future.successful(Done)
         case _ => Future.successful(Done)
