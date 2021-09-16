@@ -59,6 +59,13 @@ class TestableProjectionSpec extends AsyncWordSpecLike with Matchers with ScalaF
       fixture.addEvent(evt4)
       testProjectionMaterializer.events.size should be(4)
     }
+
+    "Store even more events slowly" in {
+      val evt5 = SlowStateUpdated(metaDate, testAggregateRootId1, "morestate", 3000L)
+      val evt6 = SlowStateUpdated(metaDate, testAggregateRootId1, "morestate", 3000L)
+      fixture.addEvents(Seq(evt5, evt6))
+      testProjectionMaterializer.events.size should be(6)
+    }
   }
 
 }
