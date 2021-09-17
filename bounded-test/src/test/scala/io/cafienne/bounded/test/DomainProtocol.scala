@@ -68,7 +68,8 @@ object DomainProtocol {
 
   case class UpdateState(metaData: CommandMetaData, aggregateRootId: String, state: String) extends DomainCommand
 
-  case class UpdateStateSlow(metaData: CommandMetaData, aggregateRootId: String, state: String, waitFor: Duration) extends DomainCommand
+  case class UpdateStateSlow(metaData: CommandMetaData, aggregateRootId: String, state: String, waitFor: Duration)
+      extends DomainCommand
 
   case class StateUpdated(metaData: MetaData, id: String, state: String) extends DomainEvent
 
