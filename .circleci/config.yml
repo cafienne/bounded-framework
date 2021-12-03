@@ -45,5 +45,14 @@ jobs:
           name: Store Coverage Report
           command: bash <(curl -s https://codecov.io/bash)
       - sonarcloud/scan
+
 orbs:
   sonarcloud: sonarsource/sonarcloud@1.0.2
+
+workflows:
+  version: 2
+  ci:
+    jobs:
+      - build:
+          context:
+            - SonarCloud
