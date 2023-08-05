@@ -1,12 +1,11 @@
 
 lazy val basicSettings = {
   val scala213 = "2.13.11"
-  val scala212 = "2.12.13"
-  val supportedScalaVersions = List(scala213, scala212)
+  val supportedScalaVersions = List(scala213)
 
   Seq(
     organization := "io.cafienne.bounded",
-    description := "Scala and Akka based Domain Driven Design Framework",
+    description := "Scala and Pekko based Domain Driven Design Framework",
     scalaVersion := scala213,
     //crossScalaVersions := supportedScalaVersions,
     //releaseCrossBuild := false,
@@ -75,12 +74,12 @@ val boundedCore = (project in file("bounded-core"))
     name := "bounded-core",
     libraryDependencies ++= Dependencies.baseDeps ++ Dependencies.persistanceLmdbDBDeps ++ Dependencies.persistenceCassandraDeps ++ Dependencies.persistenceJdbcDeps ++ Dependencies.testDeps)
 
-val boundedAkkaHttp = (project in file("bounded-akka-http"))
+val boundedAkkaHttp = (project in file("bounded-pekko-http"))
   .dependsOn(boundedCore)
   .enablePlugins(ReleasePlugin, AutomateHeaderPlugin)
   .settings(basicSettings: _*)
   .settings(
-    name := "bounded-akka-http",
+    name := "bounded-pekko-http",
     libraryDependencies ++= Dependencies.akkaHttpDeps)
 
 val boundedTest = (project in file("bounded-test"))
