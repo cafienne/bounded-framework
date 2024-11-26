@@ -1,20 +1,20 @@
 /*
- * Copyright (C) 2016-2023 Batav B.V. <https://www.cafienne.io/bounded>
+ * Copyright (C) 2016-2024 Batav B.V. <https://www.cafienne.io/bounded>
  */
 
 package io.cafienne.bounded.aggregate
 
-import akka.actor.typed.{ActorRef, Behavior}
-import akka.cluster.sharding.typed.scaladsl.EntityTypeKey
-import akka.persistence.typed.PersistenceId
-import akka.persistence.typed.scaladsl.{Effect, EventSourcedBehavior, ReplyEffect}
+import org.apache.pekko.actor.typed.{ActorRef, Behavior}
+import org.apache.pekko.cluster.sharding.typed.scaladsl.EntityTypeKey
+import org.apache.pekko.persistence.typed.PersistenceId
+import org.apache.pekko.persistence.typed.scaladsl.{Effect, EventSourcedBehavior, ReplyEffect}
 import com.typesafe.scalalogging.Logger
 import io.cafienne.bounded.aggregate.typed.TypedAggregateRootManager
 import java.time.OffsetDateTime
 import java.util.UUID
 import scala.concurrent.duration._
-import akka.actor.typed.scaladsl.{Behaviors, TimerScheduler}
-import akka.persistence.RecoveryCompleted
+import org.apache.pekko.actor.typed.scaladsl.{Behaviors, TimerScheduler}
+import org.apache.pekko.persistence.RecoveryCompleted
 import io.cafienne.bounded.SampleProtocol.{CommandMetaData, MetaData, UserContext}
 
 object TypedSimpleAggregate {

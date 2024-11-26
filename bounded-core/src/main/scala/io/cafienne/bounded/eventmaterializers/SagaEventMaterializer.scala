@@ -1,21 +1,21 @@
 /*
- * Copyright (C) 2016-2023 Batav B.V. <https://www.cafienne.io/bounded>
+ * Copyright (C) 2016-2024 Batav B.V. <https://www.cafienne.io/bounded>
  */
 
 package io.cafienne.bounded.eventmaterializers
 
 import java.util.UUID
-import akka.actor.ActorSystem
-import akka.persistence.query.scaladsl.{
+import org.apache.pekko.actor.ActorSystem
+import org.apache.pekko.persistence.query.scaladsl.{
   CurrentEventsByPersistenceIdQuery,
   CurrentEventsByTagQuery,
   EventsByTagQuery,
   ReadJournal
 }
-import akka.persistence.query.{EventEnvelope, Offset}
-import akka.stream.scaladsl.{Keep, Merge, Sink, Source}
-import akka.stream.{ActorMaterializer, KillSwitches, UniqueKillSwitch}
-import akka.{Done, NotUsed}
+import org.apache.pekko.persistence.query.{EventEnvelope, Offset}
+import org.apache.pekko.stream.scaladsl.{Keep, Merge, Sink, Source}
+import org.apache.pekko.stream.{ActorMaterializer, KillSwitches, UniqueKillSwitch}
+import org.apache.pekko.{Done, NotUsed}
 import com.typesafe.scalalogging.Logger
 import io.cafienne.bounded.aggregate.DomainEvent
 import io.cafienne.bounded.akka.ActorSystemProvider
@@ -23,7 +23,7 @@ import io.cafienne.bounded.akka.persistence.ReadJournalProvider
 import io.cafienne.bounded.config.Configured
 import io.cafienne.bounded.eventmaterializers.offsetstores.OffsetStore
 
-import scala.concurrent.duration.*
+import scala.concurrent.duration._
 import scala.concurrent.{Await, ExecutionContextExecutor, Future}
 
 /**

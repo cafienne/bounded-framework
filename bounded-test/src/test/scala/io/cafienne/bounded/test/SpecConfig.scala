@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016-2023 Batav B.V. <https://www.cafienne.io/bounded>
+ * Copyright (C) 2016-2024 Batav B.V. <https://www.cafienne.io/bounded>
  */
 
 package io.cafienne.bounded.test
@@ -18,10 +18,10 @@ object SpecConfig {
    */
   val testConfig = ConfigFactory.parseString(
     """
-      |      akka {
+      |      pekko {
       |        loglevel = "DEBUG"
       |        stdout-loglevel = "DEBUG"
-      |        loggers = ["akka.testkit.TestEventListener"]
+      |        loggers = ["org.apache.pekko.testkit.TestEventListener"]
       |        actor {
       |          serialize-messages = off
       |          serialize-creators = off
@@ -41,18 +41,14 @@ object SpecConfig {
       |       publish-confirmations = on
       |       publish-plugin-commands = on
       |       journal {
-      |          plugin = "inmemory-journal"
+      |          plugin = "pekko.persistence.journal.inmem"
       |       }
-      |       snapshot-store.plugin = "inmemory-snapshot-store"
+      |       snapshot-store.plugin = "pekko.persistence.snapshot-store.local"
       |      }
       |      test {
       |        single-expect-default = 10s
       |        timefactor = 1
       |      }
-      |    }
-      |    inmemory-read-journal {
-      |      refresh-interval = "10ms"
-      |      max-buffer-size = "1000"
       |    }
       |
       |    bounded.eventmaterializers.publish = true

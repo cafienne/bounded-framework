@@ -1,26 +1,26 @@
 /*
- * Copyright (C) 2016-2023 Batav B.V. <https://www.cafienne.io/bounded>
+ * Copyright (C) 2016-2024 Batav B.V. <https://www.cafienne.io/bounded>
  */
 
 package io.cafienne.bounded.aggregate
 
 import java.time.OffsetDateTime
-import akka.actor.testkit.typed.scaladsl.{
+import org.apache.pekko.actor.testkit.typed.scaladsl.{
   LogCapturing,
   LoggingTestKit,
   ManualTime,
   ScalaTestWithActorTestKit,
   TestProbe
 }
-import akka.actor.typed.{ActorSystem, Scheduler}
-import akka.util.Timeout
+import org.apache.pekko.actor.typed.{ActorSystem, Scheduler}
+import org.apache.pekko.util.Timeout
 import io.cafienne.bounded.aggregate.typed.DefaultTypedCommandGateway
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.flatspec.AsyncFlatSpecLike
 import com.typesafe.config.ConfigFactory
 
-import scala.concurrent.duration.*
+import scala.concurrent.duration._
 import scala.concurrent.{Await, ExecutionContextExecutor, Future}
 
 class TypedCommandGatewaySpec

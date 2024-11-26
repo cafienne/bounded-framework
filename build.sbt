@@ -1,12 +1,11 @@
 
 lazy val basicSettings = {
-  val scala213 = "2.13.11"
-  val scala212 = "2.12.13"
-  val supportedScalaVersions = List(scala213, scala212)
+  val scala213 = "2.13.15"
+  val supportedScalaVersions = List(scala213)
 
   Seq(
     organization := "io.cafienne.bounded",
-    description := "Scala and Akka based Domain Driven Design Framework",
+    description := "Scala and Pekko based Domain Driven Design Framework",
     scalaVersion := scala213,
     //crossScalaVersions := supportedScalaVersions,
     //releaseCrossBuild := false,
@@ -19,11 +18,11 @@ lazy val basicSettings = {
       "-Xlint", // recommended additional warnings
       "-Ywarn-value-discard", // Warn when non-Unit expression results are unused
       "-Ywarn-dead-code",
-      "-Ywarn-unused",
-      "-Xsource:3" //,
+      "-Ywarn-unused" //,
+      //"-Xsource:3" //,
       //"-Ywarn-unused-import"
     ),
-    scalastyleConfig := baseDirectory.value / "project/scalastyle-config.xml",
+    //scalastyleConfig := baseDirectory.value / "project/scalastyle-config.xml",
     scalafmtConfig := (ThisBuild / baseDirectory).value / "project/.scalafmt.conf",
     scalafmtOnCompile := true,
 
@@ -47,15 +46,24 @@ lazy val basicSettings = {
       url("https://github.com/olger"))
     ),
     // Add sonatype repository settings
-    publishTo := Some(
-      if (isSnapshot.value)
-        Opts.resolver.sonatypeSnapshots
-      else
-        Opts.resolver.sonatypeStaging
-    ),
+    publishTo := {
+      // For accounts created after Feb 2021:
+      // val nexus = "https://s01.oss.sonatype.org/"
+      val nexus = "https://oss.sonatype.org/"
+      if (isSnapshot.value) Some("snapshots" at nexus + "content/repositories/snapshots")
+      else Some("releases" at nexus + "service/local/staging/deploy/maven2")
+    },
+//    publishTo := Some(
+//      if (isSnapshot.value) {
+//        Opts.resolver.sonatypeOssSnapshots
+//      } else {
+//        Opts.resolver.sonatypeStaging
+//      }
+//    ),
     publishMavenStyle := true,
     Test / publishArtifact := false,
     pomIncludeRepository := { _ => false },
+    resolvers += Resolver.ApacheMavenSnapshotsRepo,
   )
 }
 
@@ -73,14 +81,15 @@ val boundedCore = (project in file("bounded-core"))
   .settings(basicSettings: _*)
   .settings(
     name := "bounded-core",
-    libraryDependencies ++= Dependencies.baseDeps ++ Dependencies.persistanceLmdbDBDeps ++ Dependencies.persistenceCassandraDeps ++ Dependencies.persistenceJdbcDeps ++ Dependencies.testDeps)
+    //libraryDependencies ++= Dependencies.baseDeps ++ Dependencies.persistanceLmdbDBDeps ++ Dependencies.persistenceCassandraDeps ++ Dependencies.persistenceJdbcDeps ++ Dependencies.testDeps)
+    libraryDependencies ++= Dependencies.baseDeps ++ Dependencies.persistenceLevelDBDeps ++ Dependencies.persistenceCassandraDeps ++ Dependencies.persistenceJdbcDeps ++ Dependencies.testDeps)
 
-val boundedAkkaHttp = (project in file("bounded-akka-http"))
+val boundedAkkaHttp = (project in file("bounded-pekko-http"))
   .dependsOn(boundedCore)
   .enablePlugins(ReleasePlugin, AutomateHeaderPlugin)
   .settings(basicSettings: _*)
   .settings(
-    name := "bounded-akka-http",
+    name := "bounded-pekko-http",
     libraryDependencies ++= Dependencies.akkaHttpDeps)
 
 val boundedTest = (project in file("bounded-test"))
