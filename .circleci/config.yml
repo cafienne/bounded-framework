@@ -41,13 +41,10 @@ jobs:
             - "~/.ivy2/cache"
             - "~/.sbt"
             - "~/.m2"
-      - run:
-          name: Store Coverage Report
-          command: bash <(curl -s https://codecov.io/bash)
       - sonarcloud/scan
 
 orbs:
-  sonarcloud: sonarsource/sonarcloud@1.1.1
+  sonarcloud: sonarsource/sonarcloud@2.0.0
 
 workflows:
   version: 2
