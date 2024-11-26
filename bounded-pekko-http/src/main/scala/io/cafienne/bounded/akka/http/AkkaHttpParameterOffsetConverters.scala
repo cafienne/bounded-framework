@@ -1,13 +1,13 @@
 /*
- * Copyright (C) 2016-2023 Batav B.V. <https://www.cafienne.io/bounded>
+ * Copyright (C) 2016-2024 Batav B.V. <https://www.cafienne.io/bounded>
  */
 
 package io.cafienne.bounded.akka.http
 
 import java.util.UUID
 
-import akka.http.scaladsl.unmarshalling._
-import akka.persistence.query.Offset
+import org.apache.pekko.http.scaladsl.unmarshalling._
+import org.apache.pekko.persistence.query.Offset
 import io.cafienne.bounded.config.Configured
 
 /**

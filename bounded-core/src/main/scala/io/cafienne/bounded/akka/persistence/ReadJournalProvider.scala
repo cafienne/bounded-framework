@@ -1,28 +1,27 @@
 /*
- * Copyright (C) 2016-2023 Batav B.V. <https://www.cafienne.io/bounded>
+ * Copyright (C) 2016-2024 Batav B.V. <https://www.cafienne.io/bounded>
  */
 
 package io.cafienne.bounded.akka.persistence
 
-import akka.actor.Props
-import akka.persistence.cassandra.query.scaladsl.CassandraReadJournal
-import akka.persistence.inmemory.query.scaladsl.InMemoryReadJournal
-import akka.persistence.jdbc.query.scaladsl.JdbcReadJournal
-import akka.persistence.journal.leveldb.{SharedLeveldbJournal, SharedLeveldbStore}
-import akka.persistence.query.PersistenceQuery
-import akka.persistence.query.journal.leveldb.scaladsl.LeveldbReadJournal
-import akka.persistence.query.scaladsl._
+import org.apache.pekko.persistence.cassandra.query.scaladsl.CassandraReadJournal
+import org.apache.pekko.persistence.query.PersistenceQuery
+import org.apache.pekko.persistence.query.journal.leveldb.scaladsl.LeveldbReadJournal
+import org.apache.pekko.persistence.query.scaladsl._
 import io.cafienne.bounded.akka.ActorSystemProvider
-import io.cafienne.bounded.akka.persistence.leveldb.SharedJournal
+import org.apache.pekko.persistence.jdbc.query.scaladsl.JdbcReadJournal
+import org.apache.pekko.persistence.r2dbc.query.scaladsl.R2dbcReadJournal
+import org.apache.pekko.persistence.journal.inmem.InmemJournal
+import org.apache.pekko.persistence.testkit.PersistenceTestKitPlugin
+import org.apache.pekko.persistence.testkit.query.scaladsl.PersistenceTestKitReadJournal
 
 /**
   * Provides a readJournal that has the eventsByTag available that's used for
   * creation of the domain/query models of the system.
   */
 trait ReadJournalProvider { systemProvider: ActorSystemProvider =>
-
   val configuredJournal =
-    system.settings.config.getString("akka.persistence.journal.plugin")
+    system.settings.config.getString("pekko.persistence.journal.plugin")
 
   def readJournal
     : ReadJournal with CurrentEventsByTagQuery with EventsByTagQuery with CurrentEventsByPersistenceIdQuery = {
@@ -32,31 +31,14 @@ trait ReadJournalProvider { systemProvider: ActorSystemProvider =>
       return PersistenceQuery(system)
         .readJournalFor[LeveldbReadJournal](LeveldbReadJournal.Identifier)
     }
-    if (configuredJournal.endsWith("leveldb-shared")) {
-      system.log.debug("configuring read journal for leveldb-shared")
-
-      val sharedJournal =
-        system.actorOf(Props(new SharedLeveldbStore), SharedJournal.name)
-      SharedLeveldbJournal.setStore(sharedJournal, system)
-
-      return PersistenceQuery(system)
-        .readJournalFor[LeveldbReadJournal](LeveldbReadJournal.Identifier)
-    }
-    //0.x series
-    if (configuredJournal.endsWith("cassandra-journal")) {
+    if (configuredJournal.endsWith("cassandra-journal") || configuredJournal.endsWith("cassandra.journal")) {
       system.log.debug("configuring read journal for cassandra")
       return PersistenceQuery(system)
         .readJournalFor[CassandraReadJournal](CassandraReadJournal.Identifier)
     }
-    // 1.x series
-    if (configuredJournal.endsWith("cassandra.journal")) {
-      system.log.debug("configuring read journal for cassandra")
+    if (configuredJournal.endsWith("r2dbc-journal")) {
       return PersistenceQuery(system)
-        .readJournalFor[CassandraReadJournal](CassandraReadJournal.Identifier)
-    }
-    if (configuredJournal.endsWith("inmemory-journal")) {
-      return PersistenceQuery(system)
-        .readJournalFor[InMemoryReadJournal](InMemoryReadJournal.Identifier)
+        .readJournalFor[R2dbcReadJournal](R2dbcReadJournal.Identifier)
         .asInstanceOf[
           ReadJournal with CurrentPersistenceIdsQuery with CurrentEventsByPersistenceIdQuery with CurrentEventsByTagQuery with EventsByPersistenceIdQuery with EventsByTagQuery
         ]
@@ -64,6 +46,13 @@ trait ReadJournalProvider { systemProvider: ActorSystemProvider =>
     if (configuredJournal.endsWith("jdbc-journal")) {
       return PersistenceQuery(system)
         .readJournalFor[JdbcReadJournal](JdbcReadJournal.Identifier)
+//        .asInstanceOf[
+//        ReadJournal with CurrentPersistenceIdsQuery with CurrentEventsByPersistenceIdQuery with CurrentEventsByTagQuery with EventsByPersistenceIdQuery with EventsByTagQuery
+//      ]
+    }
+    if (configuredJournal.endsWith("inmem")) {
+      return PersistenceQuery(system)
+        .readJournalFor("pekko.persistence.journal.inmem")
         .asInstanceOf[
           ReadJournal with CurrentPersistenceIdsQuery with CurrentEventsByPersistenceIdQuery with CurrentEventsByTagQuery with EventsByPersistenceIdQuery with EventsByTagQuery
         ]

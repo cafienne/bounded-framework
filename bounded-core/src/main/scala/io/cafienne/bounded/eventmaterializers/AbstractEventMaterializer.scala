@@ -1,15 +1,15 @@
 /*
- * Copyright (C) 2016-2023 Batav B.V. <https://www.cafienne.io/bounded>
+ * Copyright (C) 2016-2024 Batav B.V. <https://www.cafienne.io/bounded>
  */
 
 package io.cafienne.bounded.eventmaterializers
 
 import java.util.UUID
-import akka.{Done, NotUsed}
-import akka.actor.ActorSystem
-import akka.persistence.query.{EventEnvelope, Offset}
-import akka.stream.{KillSwitches, UniqueKillSwitch}
-import akka.stream.scaladsl.{Keep, Sink, Source}
+import org.apache.pekko.{Done, NotUsed}
+import org.apache.pekko.actor.ActorSystem
+import org.apache.pekko.persistence.query.{EventEnvelope, Offset}
+import org.apache.pekko.stream.{KillSwitches, UniqueKillSwitch}
+import org.apache.pekko.stream.scaladsl.{Keep, Sink, Source}
 import io.cafienne.bounded.akka.ActorSystemProvider
 import io.cafienne.bounded.akka.persistence.ReadJournalProvider
 import io.cafienne.bounded.config.Configured
@@ -18,7 +18,7 @@ import io.cafienne.bounded.aggregate.DomainEvent
 import io.cafienne.bounded.eventmaterializers.offsetstores.OffsetStore
 
 import scala.concurrent.{Await, ExecutionContextExecutor, Future}
-import scala.concurrent.duration.*
+import scala.concurrent.duration._
 
 /**
   * Abstract class to be used to create eventlisteners. Use this class as a base for listening for

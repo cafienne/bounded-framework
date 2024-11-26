@@ -1,6 +1,6 @@
 
 lazy val basicSettings = {
-  val scala213 = "2.13.11"
+  val scala213 = "2.13.14"
   val supportedScalaVersions = List(scala213)
 
   Seq(
@@ -18,11 +18,11 @@ lazy val basicSettings = {
       "-Xlint", // recommended additional warnings
       "-Ywarn-value-discard", // Warn when non-Unit expression results are unused
       "-Ywarn-dead-code",
-      "-Ywarn-unused",
-      "-Xsource:3" //,
+      "-Ywarn-unused" //,
+      //"-Xsource:3" //,
       //"-Ywarn-unused-import"
     ),
-    scalastyleConfig := baseDirectory.value / "project/scalastyle-config.xml",
+    //scalastyleConfig := baseDirectory.value / "project/scalastyle-config.xml",
     scalafmtConfig := (ThisBuild / baseDirectory).value / "project/.scalafmt.conf",
     scalafmtOnCompile := true,
 
@@ -46,15 +46,24 @@ lazy val basicSettings = {
       url("https://github.com/olger"))
     ),
     // Add sonatype repository settings
-    publishTo := Some(
-      if (isSnapshot.value)
-        Opts.resolver.sonatypeSnapshots
-      else
-        Opts.resolver.sonatypeStaging
-    ),
+    publishTo := {
+      // For accounts created after Feb 2021:
+      // val nexus = "https://s01.oss.sonatype.org/"
+      val nexus = "https://oss.sonatype.org/"
+      if (isSnapshot.value) Some("snapshots" at nexus + "content/repositories/snapshots")
+      else Some("releases" at nexus + "service/local/staging/deploy/maven2")
+    },
+//    publishTo := Some(
+//      if (isSnapshot.value) {
+//        Opts.resolver.sonatypeOssSnapshots
+//      } else {
+//        Opts.resolver.sonatypeStaging
+//      }
+//    ),
     publishMavenStyle := true,
     Test / publishArtifact := false,
     pomIncludeRepository := { _ => false },
+    resolvers += Resolver.ApacheMavenSnapshotsRepo,
   )
 }
 
@@ -72,7 +81,8 @@ val boundedCore = (project in file("bounded-core"))
   .settings(basicSettings: _*)
   .settings(
     name := "bounded-core",
-    libraryDependencies ++= Dependencies.baseDeps ++ Dependencies.persistanceLmdbDBDeps ++ Dependencies.persistenceCassandraDeps ++ Dependencies.persistenceJdbcDeps ++ Dependencies.testDeps)
+    //libraryDependencies ++= Dependencies.baseDeps ++ Dependencies.persistanceLmdbDBDeps ++ Dependencies.persistenceCassandraDeps ++ Dependencies.persistenceJdbcDeps ++ Dependencies.testDeps)
+    libraryDependencies ++= Dependencies.baseDeps ++ Dependencies.persistenceLevelDBDeps ++ Dependencies.persistenceCassandraDeps ++ Dependencies.persistenceJdbcDeps ++ Dependencies.testDeps)
 
 val boundedAkkaHttp = (project in file("bounded-pekko-http"))
   .dependsOn(boundedCore)

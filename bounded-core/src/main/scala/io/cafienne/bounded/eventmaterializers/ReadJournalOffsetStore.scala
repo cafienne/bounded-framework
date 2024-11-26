@@ -1,13 +1,14 @@
 /*
- * Copyright (C) 2016-2023 Batav B.V. <https://www.cafienne.io/bounded>
+ * Copyright (C) 2016-2024 Batav B.V. <https://www.cafienne.io/bounded>
  */
 
 package io.cafienne.bounded.eventmaterializers
 
-import java.util.concurrent.TimeUnit
+import org.apache.pekko.persistence.cassandra.query.scaladsl.CassandraReadJournal
 
-import akka.persistence.cassandra.query.scaladsl.CassandraReadJournal
-import akka.persistence.query.Offset
+import java.util.concurrent.TimeUnit
+import org.apache.pekko.persistence.cassandra.query.scaladsl.CassandraReadJournal
+import org.apache.pekko.persistence.query.Offset
 import com.typesafe.config.{ConfigFactory, ConfigValueFactory}
 import io.cafienne.bounded.akka.ActorSystemProvider
 import io.cafienne.bounded.akka.persistence.ReadJournalProvider
@@ -46,7 +47,7 @@ trait ReadJournalOffsetStore extends OffsetStore {
       new JdbcOffsetStore(
         DatabaseConfig.forConfig(
           config = system.settings.config,
-          path = system.settings.config.getString("akka.persistence.offset.jdbc.store")
+          path = system.settings.config.getString("akka.persistence.offset.r2dbc.store")
         )
       )
     } else {
